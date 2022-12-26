@@ -1,0 +1,19 @@
+PROGRAM euclid;
+
+VAR x, y : integer;
+
+procedure gcd(VAR a, b : integer);
+begin
+  while a <> b do
+  begin
+   while a > b do a := a - b;
+   while b > a do b := b - a
+  end ;  { this semicolon should not be here}
+end;
+
+{ main program starts here }
+BEGIN
+readln(x, y);
+gcd(x,y);
+writeln(x)
+END.

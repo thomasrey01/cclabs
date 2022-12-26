@@ -1,0 +1,73 @@
+%{
+    #include <stdlib.h>
+
+    #include "parser.tab.h"
+    int line = 1;
+    int position = 0;
+%}
+
+program     (?i:program)
+int         [0-9]+
+exponent    [eE][+-]?{int}
+num         {int}("."{int})?{exponent}?
+relop       \<|\>|\<=|\>=|=|\<\>
+var         (?i:var)
+skip        (?i:skip)
+beg         (?i:begin)
+end         (?i:end)
+if          (?i:if)
+else        (?i:else)
+then        (?i:then)
+div         (?i:div)
+mod         (?i:mod)
+id          [a-zA-Z][a-zA-Z0-9_]*
+integer     (?i:integer)
+real        (?i:real)
+of          (?i:of)
+procedure   (?i:procedure)
+do          (?i:do)
+array       (?i:array)
+function    (?i:function)
+while       (?i:while)
+
+%%
+
+\{[^\}]*\}    { int i = 0; while (yytext[i]!='\0') {if (yytext[i]=='\n') line++; i++;} }
+[ \t]+   { position++;      }
+;      { return SEMICOLON;}
+:      { return COLON;    }
+\.      { return PERIOD;   }
+\]      { return RSPAREN;  }
+\[      { return LSPAREN;  }
+\(      { return LPAREN;   }
+\)      { return RPAREN;   }
+,      { return COMMA;    }
+".."     { return DOUBLEPERIOD;}
+":="     { return COLEQUAL; }
+\/      { return DIVIDE;   }
+\*      { return TIMES;    }
+-      { return MINUS;    }
+\+      { return PLUS;     }
+{of}       { return OF;     }
+{array}    { return ARRAY;    }
+{var}      { return VAR;      }
+{skip}     { return SKIP;     }
+{program}  { return PROGRAM;  }
+{real}     { return REAL;     }
+{integer}  { return INTEGER;  }
+{relop}    { return RELOP;    }
+{beg}      { return BEG;      }
+{end}     {return END;}
+{if}      {return IF;}
+{else}    {return ELSE;}
+{then}    {return THEN;}
+{div}     {return DIV;}
+{mod}     {return MOD;}
+\n      {line++;}
+{do}      { return DO; }
+{num}     { return NUM; }
+{procedure}   {return PROCEDURE;}
+{function}    {return FUNCTION;}
+{while}     { return WHILE; }
+{id}       { return ID; }
+.           {printf("Unrecognized character '%c' in line %d.\n", *yytext, line); exit(EXIT_SUCCESS);}

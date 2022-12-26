@@ -1,0 +1,36 @@
+%{
+    #include <stdlib.h>
+    
+    #define Return(token) {position++; return token;}
+    #define YYSTYPE double
+    #include "parser.tab.h"
+    int position = 0;
+
+    int nested = 0;
+    int sCount = 0;
+    int cCount = 0;
+    int nCount = 0;
+%}
+
+%%
+
+[ \t\n]     { position++;    }
+"("         { Return(LNPAR)  }
+")"         { Return(RNPAR)  }
+"{"         { Return(LCPAR)  }
+"}"         { Return(RCPAR)  }
+"["         { Return(LSPAR)  }
+"]"         { Return(RSPAR)  }
+
+.           { Return(yytext[0]);}
+%%
+
+void setScannerInput(char *input)
+{
+    yy_scan_string(input);
+}
+
+void finalizeScanner()
+{
+    yylex_destroy();
+}

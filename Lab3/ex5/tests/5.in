@@ -1,0 +1,24 @@
+program comments;
+
+{ This file tests comment lines }
+
+var x : integer;
+
+{ Here we have a valid { comment }
+
+{And a multi line one,
+
+  So here we close
+
+
+a few lines
+
+later}
+
+
+{And another valid comment}
+
+begin {Yet another one}
+end.
+
+{Even after the end}

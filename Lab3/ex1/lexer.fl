@@ -1,0 +1,28 @@
+%{
+    #include <stdlib.h>
+    
+    #define Return(token) {position++; return token;}
+    #define YYSTYPE double
+    #include "parser.tab.h"
+    int position = 0;
+%}
+
+%%
+
+[ \t\n]     { position++;   }
+"x"         { Return(TOKX)  }
+"y"         { Return(TOKY)  }
+"z"         { Return(TOKZ)  }
+
+.           { Return(yytext[0]);}
+%%
+
+void setScannerInput(char *input)
+{
+    yy_scan_string(input);
+}
+
+void finalizeScanner()
+{
+    yylex_destroy();
+}

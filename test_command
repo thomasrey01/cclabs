@@ -1,0 +1,1 @@
+for i in {1..20}; do ./a.out < tests/20.in > tmp; diff -q tmp tests/20.out; done
