@@ -34,6 +34,7 @@
 }
 
 %type <ival> IDENTIFIER
+%type <ival> NumericValue
 
 %%
 
@@ -45,12 +46,12 @@ program            : PROGRAM IDENTIFIER ';'
 	                 '.'
                    ;
 
-ConstDecl          : ConstDecl CONST IDENTIFIER RELOPEQ NumericValue ';'
+ConstDecl          : ConstDecl CONST IDENTIFIER RELOPEQ NumericValue ';' { addConst($3, $5); }
 	               | /* epsilon */
                    ;
 
-NumericValue       : INTNUMBER
-                   | REALNUMBER
+NumericValue       : INTNUMBER { $0 = 1; }
+                   | REALNUMBER { $0 = 0; }
                    ;
 
 VarDecl            : VarDecl VAR IdentifierList ':' TypeSpec ';'
