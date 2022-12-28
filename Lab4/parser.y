@@ -38,7 +38,7 @@
 
 %%
 
-program            : PROGRAM IDENTIFIER ';'
+program            : PROGRAM IDENTIFIER ';' { addToTable($2, PROGRAM); }
                      ConstDecl
                      VarDecl
 	                 FuncProcDecl
@@ -50,16 +50,16 @@ ConstDecl          : ConstDecl CONST IDENTIFIER RELOPEQ NumericValue ';' { addCo
 	               | /* epsilon */
                    ;
 
-NumericValue       : INTNUMBER { $0 = 1; }
-                   | REALNUMBER { $0 = 0; }
+NumericValue       : INTNUMBER { $$ = 1; }
+                   | REALNUMBER { $$ = 0; }
                    ;
 
 VarDecl            : VarDecl VAR IdentifierList ':' TypeSpec ';'
 	               | /* epsilon */
                    ;
 
-IdentifierList     : IDENTIFIER
-                   | IdentifierList ',' IDENTIFIER
+IdentifierList     : IDENTIFIER { checkTable($1); }
+                   | IdentifierList ',' IDENTIFIER { checkTable($3); }
                    ;
 
 TypeSpec           : BasicType

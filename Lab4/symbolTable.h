@@ -1,8 +1,15 @@
 #ifndef SYMBOLTABLE_H
 
 #define SYMBOLTABLE_H
+#include "parser.tab.h"
 
 struct symbol;
+
+struct identifierProp {
+    union {
+        
+    }
+};
 
 struct symbol {
     char *id;
@@ -29,7 +36,7 @@ int popInStack(struct Stack *stack);
 
 struct symbolTable *createSymbolTable(int size);
 
-void insertInSymTable(struct symbolTable *table, struct symbol *symbol);
+void insertInSymTable(int idx, struct symbolTable *table, struct symbol *symbol);
 
 int findInSymTable(char *id, struct symbolTable *table);
 

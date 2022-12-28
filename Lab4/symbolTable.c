@@ -28,9 +28,9 @@ struct symbolTable *createSymbolTable(int size)
     return table;
 }
 
-void insertInSymTable(struct symbolTable *table, struct symbol *symbol)
+void insertInSymTable(int idx, struct symbolTable *table, struct symbol *symbol)
 {
-    int pos = getHash(symbol->id, table->size);
+    int pos = idx % table->size; 
     if (table->symbols[pos] == NULL) {
         table->symbols[pos] = symbol;
     } else {
@@ -40,12 +40,6 @@ void insertInSymTable(struct symbolTable *table, struct symbol *symbol)
         }
         symbolPtr = symbol;
     }
-}
-
-void insertFromIndex(struct symbolTable *table, int idx)
-{
-    char *s = getFromIndex(idx);
-    
 }
 
 int findInSymTable(char *id, struct symbolTable *table)
