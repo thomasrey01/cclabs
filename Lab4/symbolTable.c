@@ -3,19 +3,6 @@
 #include <string.h>
 #include "symbolTable.h"
 
-int getHash(char *id, int size)
-{
-    unsigned int res = 0;
-    char *idPtr = id;
-    int i = 1;
-    while ((*idPtr) != '\0') {
-        res += (int)*idPtr * i;
-        i++;
-        idPtr++;
-    }
-    return (int)(res % size);
-}
-
 struct symbolTable *createSymbolTable(int size)
 {
     struct symbolTable *table;
@@ -42,13 +29,13 @@ void insertInSymTable(int idx, struct symbolTable *table, struct symbol *symbol)
     }
 }
 
-int findInSymTable(char *id, struct symbolTable *table)
+int findInSymTable(int idx, struct symbolTable *table)
 {
-    int pos = getHash(id, table->size);
+    int pos = idx % table->size;
     if (table->symbols[pos] != NULL) {
         struct symbol *symbolPtr = table->symbols[pos];
         while (symbolPtr != NULL) {
-            if (!strcmp(symbolPtr->id, id)) {
+            if (symbolPtr->id == idx) {
                 return 1;
             }
             symbolPtr = symbolPtr->next;
@@ -61,29 +48,29 @@ struct Stack *createStack(int size)
 {
     struct Stack *stack = (struct Stack*)malloc(sizeof(struct Stack));
     stack->size = size;
-    stack->array = malloc(size * sizeof(int));
+    stack->prop = (struct identifierProp **)malloc(size * sizeof(struct identifierProp*));
     stack->top = 0;
     return stack;
 }
 
-void pushInStack(struct Stack *stack, int token)
+void pushInStack(struct Stack *stack, struct identifierProp *token)
 {
     if (stack->top == stack->size) {
         printf("Stack Overflow!\n");
         exit(EXIT_SUCCESS);
     }
-    stack->array[stack->top] = token;
+    stack->prop[stack->top] = token;
     stack->top++;
 }
 
-int popInStack(struct Stack *stack)
+struct identifierProp *popInStack(struct Stack *stack)
 {
     if (isEmptyStack(stack)) {
         printf("Stack Underflow!\n");
         exit(EXIT_SUCCESS);
     }
     stack->top -= 1;
-    int res = stack->array[stack->top];
+    struct identifierProp *res = stack->prop[stack->top];
     return res;
 } 
 

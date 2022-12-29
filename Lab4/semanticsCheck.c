@@ -5,13 +5,8 @@
 #include "parser_tab.h"
 
 extern struct symbolTable *symtab;
-
-void checkType(char *s)
-{
-    if (!findInTable(symtab, s)) {
-        yyerror("Undefined variable: %s", s);
-    }
-}
+extern int scope;
+const int stackSize = 50;
 
 void checkExistance(int idx)
 {
@@ -23,5 +18,10 @@ void checkExistance(int idx)
 
 void addToTable(int idx, enum yytokentype type)
 {
-    
+    if (!findInSymTable(idx, symtab)) {
+        struct symbol *sym = malloc(sizeof(struct symbol));
+        sym->id = idx;
+        sym->next = NULL;
+        sym->stack = createStack(stackSize);
+    }
 }

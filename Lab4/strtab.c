@@ -80,7 +80,3 @@ void freeStringTable()
   strTabSize = 0;
 }
 
-char *getFromIndex(int idx)
-{
-    return stringTable[idx];    
-}
