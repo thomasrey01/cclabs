@@ -1,5 +1,8 @@
-all: parser lexer symbolTable
-	gcc -O2 parser.o lexer.o symbolTable.o -lfl -lm
+all: strtab parser lexer symbolTable
+	gcc -O2 strtab.o parser.o lexer.o symbolTable.o -lfl -lm
+
+strtab: strtab.c strtab.h
+	gcc -O2 -c strtab.c
 
 parser: parser.y
 	bison -d parser.y
@@ -10,8 +13,12 @@ lexer: lexer.fl
 	flex lexer.fl
 	mv lex.yy.c lexer.c
 	gcc -O2 -c lexer.c
+
 symbolTable: symbolTable.c symbolTable.h
 	gcc -O2 -c symbolTable.c
+
+
+
 clean:
 	rm -f *~
 	rm -f *.o

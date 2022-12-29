@@ -15,7 +15,7 @@
  */
 int lookupStringTable(char *str);
 
-void insertFromIndex(struct symbolTable *table, int idx);
+// void insertFromIndex(struct symbolTable *table, int idx);
 
 /* The call insertOrRetrieveStringTable(str) inserts str in the string 
  * table if it was not already in the table, otherwise it does not 

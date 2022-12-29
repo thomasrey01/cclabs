@@ -1241,13 +1241,13 @@ yyreduce:
     {
   case 2: /* $@1: %empty  */
 #line 41 "parser.y"
-                                            { addToTable((yyvsp[-1].ival), PROGRAM); }
+                                            { printf("Identifier is: %d\n", (yyvsp[-1].ival)); }
 #line 1246 "parser.tab.c"
     break;
 
   case 4: /* ConstDecl: ConstDecl CONST IDENTIFIER RELOPEQ NumericValue ';'  */
 #line 49 "parser.y"
-                                                                         { addConst((yyvsp[-3].ival), (yyvsp[-1].ival)); }
+                                                                         { printf("const ident is: %d\n", (yyvsp[-3].ival)); }
 #line 1252 "parser.tab.c"
     break;
 
@@ -1265,19 +1265,19 @@ yyreduce:
 
   case 10: /* IdentifierList: IDENTIFIER  */
 #line 61 "parser.y"
-                                { checkTable((yyvsp[0].ival)); }
+                                { /*checkTable($1);*/ }
 #line 1270 "parser.tab.c"
     break;
 
   case 11: /* IdentifierList: IdentifierList ',' IDENTIFIER  */
 #line 62 "parser.y"
-                                                   { checkTable((yyvsp[0].ival)); }
+                                                   { /*checkTable($3);*/ }
 #line 1276 "parser.tab.c"
     break;
 
   case 38: /* Lhs: IDENTIFIER  */
 #line 117 "parser.y"
-                                { checkType((yyvsp[0].ival)); }
+                                { /*checkType($1);*/ }
 #line 1282 "parser.tab.c"
     break;
 

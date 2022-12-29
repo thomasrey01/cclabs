@@ -38,7 +38,7 @@
 
 %%
 
-program            : PROGRAM IDENTIFIER ';' { addToTable($2, PROGRAM); }
+program            : PROGRAM IDENTIFIER ';' { printf("Identifier is: %d\n", $2); }
                      ConstDecl
                      VarDecl
 	                 FuncProcDecl
@@ -46,7 +46,7 @@ program            : PROGRAM IDENTIFIER ';' { addToTable($2, PROGRAM); }
 	                 '.'
                    ;
 
-ConstDecl          : ConstDecl CONST IDENTIFIER RELOPEQ NumericValue ';' { addConst($3, $5); }
+ConstDecl          : ConstDecl CONST IDENTIFIER RELOPEQ NumericValue ';' { printf("const ident is: %d\n", $3); }
 	               | /* epsilon */
                    ;
 
@@ -58,8 +58,8 @@ VarDecl            : VarDecl VAR IdentifierList ':' TypeSpec ';'
 	               | /* epsilon */
                    ;
 
-IdentifierList     : IDENTIFIER { checkTable($1); }
-                   | IdentifierList ',' IDENTIFIER { checkTable($3); }
+IdentifierList     : IDENTIFIER { /*checkTable($1);*/ }
+                   | IdentifierList ',' IDENTIFIER { /*checkTable($3);*/ }
                    ;
 
 TypeSpec           : BasicType
@@ -114,7 +114,7 @@ Statement          : Lhs ASSIGN ArithExpr
                    | WHILE Guard DO Statement
                    ;
 
-Lhs                : IDENTIFIER { checkType($1); }
+Lhs                : IDENTIFIER { /*checkType($1);*/ }
                    | IDENTIFIER '[' ArithExpr ']'
                    ;
 
