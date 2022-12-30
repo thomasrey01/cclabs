@@ -1241,7 +1241,7 @@ yyreduce:
     {
   case 3: /* ConstDecl: ConstDecl CONST IDENTIFIER RELOPEQ NumericValue ';'  */
 #line 51 "parser.y"
-                                                                         { addConst(readToken, 1); /* Problem in this function */ }
+                                                                         { addConst(yylval.ival, 1); /* Problem in this function */ }
 #line 1246 "parser.tab.c"
     break;
 
@@ -1275,32 +1275,44 @@ yyreduce:
 #line 1276 "parser.tab.c"
     break;
 
+  case 18: /* SubProgHeading: FUNCTION IDENTIFIER Parameters ':' BasicType ';'  */
+#line 82 "parser.y"
+                                                                      { addFunction(yylval.ival, numArguments); }
+#line 1282 "parser.tab.c"
+    break;
+
   case 37: /* Lhs: IDENTIFIER  */
 #line 119 "parser.y"
-                                { checkAssign(readToken); }
-#line 1282 "parser.tab.c"
+                                { checkAssign(yylval.ival); }
+#line 1288 "parser.tab.c"
+    break;
+
+  case 38: /* Lhs: IDENTIFIER '[' ArithExpr ']'  */
+#line 120 "parser.y"
+                                                  { }
+#line 1294 "parser.tab.c"
     break;
 
   case 53: /* ArithExprList: ArithExpr  */
 #line 145 "parser.y"
                                { numArguments++; }
-#line 1288 "parser.tab.c"
+#line 1300 "parser.tab.c"
     break;
 
   case 54: /* ArithExprList: ArithExprList ',' ArithExpr  */
 #line 146 "parser.y"
                                                  { numArguments++; }
-#line 1294 "parser.tab.c"
+#line 1306 "parser.tab.c"
     break;
 
   case 57: /* ArithExpr: IDENTIFIER '(' ArithExprList ')'  */
 #line 151 "parser.y"
-                                                      { checkFunction(readToken, numArguments); }
-#line 1300 "parser.tab.c"
+                                                      { checkFunction(yylval.ival, numArguments); }
+#line 1312 "parser.tab.c"
     break;
 
 
-#line 1304 "parser.tab.c"
+#line 1316 "parser.tab.c"
 
       default: break;
     }

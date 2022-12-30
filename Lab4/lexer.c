@@ -1035,7 +1035,7 @@ YY_RULE_SETUP
 case 44:
 YY_RULE_SETUP
 #line 79 "lexer.fl"
-{ readToken = insertOrRetrieveStringTable(yytext); eat(); return IDENTIFIER; }
+{ yylval.ival = insertOrRetrieveStringTable(yytext); eat(); return IDENTIFIER; }
 	YY_BREAK
 case 45:
 /* rule 45 can match eol */

@@ -17,6 +17,7 @@ void initTables()
 
 void addFunction(int idx, int numArgs)
 {
+    printf("adding token: %d\n", idx);
     struct symbol *sym = findInSymTable(idx, functions);
     if(sym == NULL) {
         sym = malloc(sizeof(struct symbol));
@@ -26,6 +27,7 @@ void addFunction(int idx, int numArgs)
     sym->isConst = 0;
     sym->isFunc = 1;
     sym->numArguments = numArgs;
+    insertInSymTable(idx, functions, sym);
 }
 
 void checkAssign(int idx)
@@ -65,6 +67,7 @@ void addConst(int idx, int isGlobal)
 
 void checkFunction(int idx, int args)
 {
+    printf("Checking token: %d\n", idx);
     struct symbol *sym = findInSymTable(idx, functions);
     if (sym == NULL) {
         printf("Undefined function call");

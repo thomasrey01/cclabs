@@ -14,4 +14,6 @@ void addConst(int idx, int isGlobal);
 
 void checkFunction(int idx, int args);
 
+void addFunction(int idx, int numArgs);
+
 #endif

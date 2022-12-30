@@ -48,7 +48,7 @@ program            : PROGRAM IDENTIFIER ';'
 	                 '.'
                    ;
 
-ConstDecl          : ConstDecl CONST IDENTIFIER RELOPEQ NumericValue ';' { addConst(readToken, 1); /* Problem in this function */ }
+ConstDecl          : ConstDecl CONST IDENTIFIER RELOPEQ NumericValue ';' { addConst(yylval.ival, 1); /* Problem in this function */ }
 	               | /* epsilon */
                    ;
 
@@ -79,7 +79,7 @@ FuncProcDecl       : FuncProcDecl SubProgDecl ';'
 SubProgDecl        : SubProgHeading VarDecl CompoundStatement
                    ;
 
-SubProgHeading     : FUNCTION IDENTIFIER Parameters ':' BasicType ';'
+SubProgHeading     : FUNCTION IDENTIFIER Parameters ':' BasicType ';' { addFunction(yylval.ival, numArguments); }
                    | PROCEDURE IDENTIFIER PossibleParameters ';'
                    ;
 
@@ -94,7 +94,7 @@ ParameterList      : ParamList
                    | ParameterList ';' ParamList
                    ;
 
-ParamList          : VAR IdentifierList ':' TypeSpec
+ParamList          : VAR IdentifierList ':' TypeSpec { addToLocal(yylval.ival, $4); } // have to add all to local table first or else it cocks it up
                    | IdentifierList ':' TypeSpec
                    ;                   
 
@@ -116,8 +116,8 @@ Statement          : Lhs ASSIGN ArithExpr
                    | WHILE Guard DO Statement
                    ;
 
-Lhs                : IDENTIFIER { checkAssign(readToken); }
-                   | IDENTIFIER '[' ArithExpr ']'
+Lhs                : IDENTIFIER { checkAssign(yylval.ival); }
+                   | IDENTIFIER '[' ArithExpr ']' { }
                    ;
 
 ProcedureCall      : IDENTIFIER
@@ -148,7 +148,7 @@ ArithExprList      : ArithExpr { numArguments++; }
 
 ArithExpr          : IDENTIFIER
                    | IDENTIFIER '[' ArithExpr ']'
-                   | IDENTIFIER '(' ArithExprList ')' { checkFunction(readToken, numArguments); }
+                   | IDENTIFIER '(' ArithExprList ')' { checkFunction(yylval.ival, numArguments); }
                    | INTNUMBER
                    | REALNUMBER
                    | ArithExpr '+' ArithExpr
