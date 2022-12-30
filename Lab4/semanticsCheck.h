@@ -8,8 +8,10 @@ void checkType(char *s);
 
 void checkAssign(int idx);
 
-void addFunction(int idx);
+void addFunction(int idx, int numArgs);
 
 void addConst(int idx, int isGlobal);
+
+void checkFunction(int idx, int args);
 
 #endif

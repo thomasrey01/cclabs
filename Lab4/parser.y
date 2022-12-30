@@ -5,6 +5,7 @@
 #include "symbolTable.h"
 #include "semanticsCheck.h"
 
+  int numArguments = 0;
   void yyerror(char *msg);    /* forward declaration */
   /* exported by the lexer (made with flex) */
   extern int yylex(void);
@@ -141,13 +142,13 @@ Relop              : RELOPLT
                    | RELOPGT
                    ;
 
-ArithExprList      : ArithExpr
-                   | ArithExprList ',' ArithExpr
+ArithExprList      : ArithExpr { numArguments++; }
+                   | ArithExprList ',' ArithExpr { numArguments++; }
                    ;
 
 ArithExpr          : IDENTIFIER
                    | IDENTIFIER '[' ArithExpr ']'
-                   | IDENTIFIER '(' ArithExprList ')'
+                   | IDENTIFIER '(' ArithExprList ')' { checkFunction(readToken, numArguments); }
                    | INTNUMBER
                    | REALNUMBER
                    | ArithExpr '+' ArithExpr

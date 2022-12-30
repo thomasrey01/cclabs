@@ -3,6 +3,8 @@
 #include <string.h>
 #include "symbolTable.h"
 
+extern int tableSize;
+
 struct symbolTable *createSymbolTable(int size)
 {
     struct symbolTable *table;
@@ -44,8 +46,17 @@ struct symbol *findInSymTable(int idx, struct symbolTable *table)
     return NULL;
 }
 
-
-int isEmptyStack(struct Stack *stack)
+void freeListRec(struct symbol *sym)
 {
-    return (stack->top == 0);
+    if (sym == NULL) return;
+    freeListRec(sym->next);
+    free(sym);
 }
+
+void purgeTable(struct symbolTable *table)
+{
+    for (int i = 0; i < tableSize; i++) {
+        freeListRec(table->symbols[i]);
+    }
+}
+

@@ -14,6 +14,8 @@ struct symbol {
     struct symbol *next;
     enum type varType;
     int isConst;
+    int isFunc;
+    int numArguments;
 };
 
 struct symbolTable {

@@ -75,6 +75,7 @@
 #include "symbolTable.h"
 #include "semanticsCheck.h"
 
+  int numArguments = 0;
   void yyerror(char *msg);    /* forward declaration */
   /* exported by the lexer (made with flex) */
   extern int yylex(void);
@@ -85,7 +86,7 @@
   extern struct symbolTable *symtab;
   extern int readToken;
 
-#line 89 "parser.tab.c"
+#line 90 "parser.tab.c"
 
 # ifndef YY_CAST
 #  ifdef __cplusplus
@@ -574,13 +575,13 @@ static const yytype_int8 yytranslate[] =
 /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_uint8 yyrline[] =
 {
-       0,    42,    42,    50,    51,    54,    55,    58,    59,    62,
-      63,    66,    67,    70,    71,    74,    75,    78,    81,    82,
-      85,    86,    89,    92,    93,    96,    97,   100,   103,   104,
-     107,   108,   111,   112,   113,   114,   115,   118,   119,   122,
-     123,   126,   127,   128,   129,   130,   133,   136,   137,   138,
-     139,   140,   141,   144,   145,   148,   149,   150,   151,   152,
-     153,   154,   155,   156,   157,   158,   159,   160
+       0,    43,    43,    51,    52,    55,    56,    59,    60,    63,
+      64,    67,    68,    71,    72,    75,    76,    79,    82,    83,
+      86,    87,    90,    93,    94,    97,    98,   101,   104,   105,
+     108,   109,   112,   113,   114,   115,   116,   119,   120,   123,
+     124,   127,   128,   129,   130,   131,   134,   137,   138,   139,
+     140,   141,   142,   145,   146,   149,   150,   151,   152,   153,
+     154,   155,   156,   157,   158,   159,   160,   161
 };
 #endif
 
@@ -1239,49 +1240,67 @@ yyreduce:
   switch (yyn)
     {
   case 3: /* ConstDecl: ConstDecl CONST IDENTIFIER RELOPEQ NumericValue ';'  */
-#line 50 "parser.y"
+#line 51 "parser.y"
                                                                          { addConst(readToken, 1); /* Problem in this function */ }
-#line 1245 "parser.tab.c"
+#line 1246 "parser.tab.c"
     break;
 
   case 7: /* VarDecl: VarDecl VAR IdentifierList ':' TypeSpec ';'  */
-#line 58 "parser.y"
+#line 59 "parser.y"
                                                                  {}
-#line 1251 "parser.tab.c"
+#line 1252 "parser.tab.c"
     break;
 
   case 9: /* IdentifierList: IDENTIFIER  */
-#line 62 "parser.y"
+#line 63 "parser.y"
                                 { /*checkTable(readToken);*/ }
-#line 1257 "parser.tab.c"
+#line 1258 "parser.tab.c"
     break;
 
   case 10: /* IdentifierList: IdentifierList ',' IDENTIFIER  */
-#line 63 "parser.y"
+#line 64 "parser.y"
                                                    { /*checkTable(readToken);*/ }
-#line 1263 "parser.tab.c"
+#line 1264 "parser.tab.c"
     break;
 
   case 13: /* BasicType: INTEGER  */
-#line 70 "parser.y"
+#line 71 "parser.y"
                              { (yyval.ival) = 0; }
-#line 1269 "parser.tab.c"
+#line 1270 "parser.tab.c"
     break;
 
   case 14: /* BasicType: REAL  */
-#line 71 "parser.y"
+#line 72 "parser.y"
                           { (yyval.ival) = 1; }
-#line 1275 "parser.tab.c"
+#line 1276 "parser.tab.c"
     break;
 
   case 37: /* Lhs: IDENTIFIER  */
-#line 118 "parser.y"
+#line 119 "parser.y"
                                 { checkAssign(readToken); }
-#line 1281 "parser.tab.c"
+#line 1282 "parser.tab.c"
+    break;
+
+  case 53: /* ArithExprList: ArithExpr  */
+#line 145 "parser.y"
+                               { numArguments++; }
+#line 1288 "parser.tab.c"
+    break;
+
+  case 54: /* ArithExprList: ArithExprList ',' ArithExpr  */
+#line 146 "parser.y"
+                                                 { numArguments++; }
+#line 1294 "parser.tab.c"
+    break;
+
+  case 57: /* ArithExpr: IDENTIFIER '(' ArithExprList ')'  */
+#line 151 "parser.y"
+                                                      { checkFunction(readToken, numArguments); }
+#line 1300 "parser.tab.c"
     break;
 
 
-#line 1285 "parser.tab.c"
+#line 1304 "parser.tab.c"
 
       default: break;
     }
@@ -1474,7 +1493,7 @@ yyreturnlab:
   return yyresult;
 }
 
-#line 163 "parser.y"
+#line 164 "parser.y"
 
 
 void printToken(int token) {

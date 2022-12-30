@@ -2,26 +2,30 @@
 #include <stdlib.h>
 #include "semanticsCheck.h"
 
+int tableSize = 100;
+
 struct symbolTable *localvars;
 struct symbolTable *globalvars;
 struct symbolTable *functions;
 
 void initTables()
 {
-    localvars = createSymbolTable(100);
-    globalvars = createSymbolTable(100);
-    functions = createSymbolTable(100);
+    localvars = createSymbolTable(tableSize);
+    globalvars = createSymbolTable(tableSize);
+    functions = createSymbolTable(tableSize);
 }
 
-void addFunction(int idx)
+void addFunction(int idx, int numArgs)
 {
     struct symbol *sym = findInSymTable(idx, functions);
     if(sym == NULL) {
         sym = malloc(sizeof(struct symbol));
         sym->id = idx;
         sym->next = NULL;
-        insertInSymTable(idx, functions, sym);
     }
+    sym->isConst = 0;
+    sym->isFunc = 1;
+    sym->numArguments = numArgs;
 }
 
 void checkAssign(int idx)
@@ -56,5 +60,18 @@ void addConst(int idx, int isGlobal)
         insertInSymTable(idx, globalvars, sym);
     } else {
         insertInSymTable(idx, localvars, sym);
+    }
+}
+
+void checkFunction(int idx, int args)
+{
+    struct symbol *sym = findInSymTable(idx, functions);
+    if (sym == NULL) {
+        printf("Undefined function call");
+        return;
+    }
+    if (sym->numArguments != args) {
+        printf("Invalid number of arguments");
+        return;
     }
 }
