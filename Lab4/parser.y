@@ -47,7 +47,7 @@ program            : PROGRAM IDENTIFIER ';'
 	                 '.'
                    ;
 
-ConstDecl          : ConstDecl CONST IDENTIFIER RELOPEQ NumericValue ';' { addConst(readToken, 1); }
+ConstDecl          : ConstDecl CONST IDENTIFIER RELOPEQ NumericValue ';' { addConst(readToken, 1); /* Problem in this function */ }
 	               | /* epsilon */
                    ;
 
@@ -55,12 +55,12 @@ NumericValue       : INTNUMBER  /* dont care about this bullshit for now */
                    | REALNUMBER
                    ;
 
-VarDecl            : VarDecl VAR IdentifierList ':' TypeSpec ';' { addVar()}
+VarDecl            : VarDecl VAR IdentifierList ':' TypeSpec ';' {}
 	               | /* epsilon */
                    ;
 
-IdentifierList     : IDENTIFIER { checkTable(readToken); }
-                   | IdentifierList ',' IDENTIFIER { checkTable(readToken); }
+IdentifierList     : IDENTIFIER { /*checkTable(readToken);*/ }
+                   | IdentifierList ',' IDENTIFIER { /*checkTable(readToken);*/ }
                    ;
 
 TypeSpec           : BasicType
@@ -233,7 +233,7 @@ int main(int argc, char *argv[]) {
     fprintf(stderr, "Usage: %s [pasfile]\n", argv[0]);
     return EXIT_FAILURE;
   }
-  symtab = createSymbolTable(500);
+  initTables();
 
   
   FILE *f = stdin;

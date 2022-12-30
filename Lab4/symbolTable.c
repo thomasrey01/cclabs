@@ -44,35 +44,6 @@ struct symbol *findInSymTable(int idx, struct symbolTable *table)
     return NULL;
 }
 
-struct Stack *createStack(int size)
-{
-    struct Stack *stack = (struct Stack*)malloc(sizeof(struct Stack));
-    stack->size = size;
-    stack->prop = (struct identifierProp **)malloc(size * sizeof(struct identifierProp*));
-    stack->top = 0;
-    return stack;
-}
-
-void pushInStack(struct Stack *stack, struct identifierProp *token)
-{
-    if (stack->top == stack->size) {
-        printf("Stack Overflow!\n");
-        exit(EXIT_SUCCESS);
-    }
-    stack->prop[stack->top] = token;
-    stack->top++;
-}
-
-struct identifierProp *popInStack(struct Stack *stack)
-{
-    if (isEmptyStack(stack)) {
-        printf("Stack Underflow!\n");
-        exit(EXIT_SUCCESS);
-    }
-    stack->top -= 1;
-    struct identifierProp *res = stack->prop[stack->top];
-    return res;
-} 
 
 int isEmptyStack(struct Stack *stack)
 {

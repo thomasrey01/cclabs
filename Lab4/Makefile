@@ -1,5 +1,8 @@
-all: strtab parser lexer symbolTable
-	gcc -O2 strtab.o parser.o lexer.o symbolTable.o -lfl -lm
+all: strtab semanticsCheck parser lexer symbolTable
+	gcc -O2 strtab.o semanticsCheck.o parser.o lexer.o symbolTable.o -lfl -lm
+
+semanticsCheck:semanticsCheck.c semanticsCheck.h
+	gcc -O2 -c semanticsCheck.c
 
 strtab: strtab.c strtab.h
 	gcc -O2 -c strtab.c

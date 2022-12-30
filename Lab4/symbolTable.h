@@ -1,11 +1,10 @@
 #ifndef SYMBOLTABLE_H
 
 #define SYMBOLTABLE_H
-#include "parser.tab.h"
 
 enum type {
     INT,
-    REAL
+    FLOAT
 };
 
 struct symbol;
@@ -29,6 +28,8 @@ struct Stack {
 };
 
 struct Stack *newStack();
+
+void initTables();
 
 void pushInStack(struct Stack *stack, struct identifierProp *token);
 

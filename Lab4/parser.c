@@ -1240,25 +1240,25 @@ yyreduce:
     {
   case 3: /* ConstDecl: ConstDecl CONST IDENTIFIER RELOPEQ NumericValue ';'  */
 #line 50 "parser.y"
-                                                                         { addConst(readTokeni, 1); }
+                                                                         { addConst(readToken, 1); /* Problem in this function */ }
 #line 1245 "parser.tab.c"
     break;
 
   case 7: /* VarDecl: VarDecl VAR IdentifierList ':' TypeSpec ';'  */
 #line 58 "parser.y"
-                                                                 { addVar()}
+                                                                 {}
 #line 1251 "parser.tab.c"
     break;
 
   case 9: /* IdentifierList: IDENTIFIER  */
 #line 62 "parser.y"
-                                { checkTable(readToken); }
+                                { /*checkTable(readToken);*/ }
 #line 1257 "parser.tab.c"
     break;
 
   case 10: /* IdentifierList: IdentifierList ',' IDENTIFIER  */
 #line 63 "parser.y"
-                                                   { checkTable(readToken); }
+                                                   { /*checkTable(readToken);*/ }
 #line 1263 "parser.tab.c"
     break;
 
@@ -1276,7 +1276,7 @@ yyreduce:
 
   case 37: /* Lhs: IDENTIFIER  */
 #line 118 "parser.y"
-                                { /*checkType($1);*/ }
+                                { checkAssign(readToken); }
 #line 1281 "parser.tab.c"
     break;
 
@@ -1548,7 +1548,7 @@ int main(int argc, char *argv[]) {
     fprintf(stderr, "Usage: %s [pasfile]\n", argv[0]);
     return EXIT_FAILURE;
   }
-  symtab = createSymbolTable(500);
+  initTables();
 
   
   FILE *f = stdin;

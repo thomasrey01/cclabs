@@ -1,32 +1,16 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "semanticsCheck.h"
-#include "symbolTable.h"
-#include "parser_tab.h"
 
-extern struct symbolTable *symtab;
+struct symbolTable *localvars;
+struct symbolTable *globalvars;
+struct symbolTable *functions;
 
-extern struct symbolTable *localvars;
-extern struct symbolTable *globalvars;
-extern struct symbolTable *functions;
-
-extern int scope;
-
-void checkExistance(int idx)
+void initTables()
 {
-    char *s = getFromIndex(idx);
-    if (!findInTable(symtab, s)) {
-        yyerror("Undefined variable: %s", s);
-    }
-}
-
-void addToTable(int idx, enum type varType)
-{
-    if (!findInSymTable(idx, symtab)) {
-        struct symbol *sym = malloc(sizeof(struct symbol));
-        sym->id = idx;
-        sym->next = NULL;
-    }
+    localvars = createSymbolTable(100);
+    globalvars = createSymbolTable(100);
+    functions = createSymbolTable(100);
 }
 
 void addFunction(int idx)
@@ -40,12 +24,26 @@ void addFunction(int idx)
     }
 }
 
-void addConst(int idx, int isGlobal, enum type type)
+void checkAssign(int idx)
+{
+    struct symbol *sym = findInSymTable(idx, globalvars);
+    if (sym == NULL) {
+        sym = findInSymTable(idx, localvars);
+        if (sym == NULL) {
+            printf("undefined symbol\n");
+            return;
+        }
+    }
+    if (sym->isConst) {
+        printf("Cannot assign to constant variable\n");
+    }
+}
+
+void addConst(int idx, int isGlobal)
 {
     struct symbol *sym;
     if (isGlobal) {
         sym = findInSymTable(idx, globalvars);
-        
     } else {
         sym = findInSymTable(idx, localvars);
     }
@@ -53,6 +51,10 @@ void addConst(int idx, int isGlobal, enum type type)
         sym = malloc(sizeof(struct symbol));
         sym->id = idx;
     }
-    sym->varType = type; 
     sym->isConst = 1;
+    if (isGlobal) {
+        insertInSymTable(idx, globalvars, sym);
+    } else {
+        insertInSymTable(idx, localvars, sym);
+    }
 }
