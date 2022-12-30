@@ -29,19 +29,19 @@ void insertInSymTable(int idx, struct symbolTable *table, struct symbol *symbol)
     }
 }
 
-int findInSymTable(int idx, struct symbolTable *table)
+struct symbol *findInSymTable(int idx, struct symbolTable *table)
 {
     int pos = idx % table->size;
     if (table->symbols[pos] != NULL) {
         struct symbol *symbolPtr = table->symbols[pos];
         while (symbolPtr != NULL) {
             if (symbolPtr->id == idx) {
-                return 1;
+                return symbolPtr;
             }
             symbolPtr = symbolPtr->next;
         }
     }
-    return 0;
+    return NULL;
 }
 
 struct Stack *createStack(int size)

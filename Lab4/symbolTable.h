@@ -3,21 +3,18 @@
 #define SYMBOLTABLE_H
 #include "parser.tab.h"
 
-struct symbol;
-
-struct identifierProp {
-    enum yytokentype type;
-    int scope;
-    union {
-        int ival;
-        double dval;
-    } value;
+enum type {
+    INT,
+    REAL
 };
+
+struct symbol;
 
 struct symbol {
     int id;
     struct symbol *next;
-    struct Stack *stack; 
+    enum type varType;
+    int isConst;
 };
 
 struct symbolTable {
@@ -41,7 +38,7 @@ struct symbolTable *createSymbolTable(int size);
 
 void insertInSymTable(int idx, struct symbolTable *table, struct symbol *symbol);
 
-int findInSymTable(int idx, struct symbolTable *table);
+struct symbol *findInSymTable(int idx, struct symbolTable *table);
 
 int isEmptyStack(struct Stack *stack);
 

@@ -13,6 +13,7 @@
   extern void initLexer(FILE *f);
   extern void finalizeLexer();
   extern struct symbolTable *symtab;
+  extern int readToken;
 %}
 
 %token PROGRAM CONST IDENTIFIER VAR ARRAY RANGE INTNUMBER REALNUMBER OF 
@@ -34,11 +35,11 @@
 }
 
 %type <ival> IDENTIFIER
-%type <ival> NumericValue
+%type <ival> BasicType
 
 %%
 
-program            : PROGRAM IDENTIFIER ';' { printf("Identifier is: %d\n", $2); }
+program            : PROGRAM IDENTIFIER ';'
                      ConstDecl
                      VarDecl
 	                 FuncProcDecl
@@ -46,28 +47,28 @@ program            : PROGRAM IDENTIFIER ';' { printf("Identifier is: %d\n", $2);
 	                 '.'
                    ;
 
-ConstDecl          : ConstDecl CONST IDENTIFIER RELOPEQ NumericValue ';' { printf("const ident is: %d\n", $3); }
+ConstDecl          : ConstDecl CONST IDENTIFIER RELOPEQ NumericValue ';' { addConst(readToken, 1); }
 	               | /* epsilon */
                    ;
 
-NumericValue       : INTNUMBER { $$ = 1; }
-                   | REALNUMBER { $$ = 0; }
+NumericValue       : INTNUMBER  /* dont care about this bullshit for now */
+                   | REALNUMBER
                    ;
 
-VarDecl            : VarDecl VAR IdentifierList ':' TypeSpec ';'
+VarDecl            : VarDecl VAR IdentifierList ':' TypeSpec ';' { addVar()}
 	               | /* epsilon */
                    ;
 
-IdentifierList     : IDENTIFIER { /*checkTable($1);*/ }
-                   | IdentifierList ',' IDENTIFIER { /*checkTable($3);*/ }
+IdentifierList     : IDENTIFIER { checkTable(readToken); }
+                   | IdentifierList ',' IDENTIFIER { checkTable(readToken); }
                    ;
 
 TypeSpec           : BasicType
                    | ARRAY '[' INTNUMBER RANGE INTNUMBER ']' OF BasicType
                    ;
 
-BasicType          : INTEGER
-                   | REAL
+BasicType          : INTEGER { $$ = 0; }
+                   | REAL { $$ = 1; }
                    ;
 
 FuncProcDecl       : FuncProcDecl SubProgDecl ';'
@@ -114,7 +115,7 @@ Statement          : Lhs ASSIGN ArithExpr
                    | WHILE Guard DO Statement
                    ;
 
-Lhs                : IDENTIFIER { /*checkType($1);*/ }
+Lhs                : IDENTIFIER { checkAssign(readToken); }
                    | IDENTIFIER '[' ArithExpr ']'
                    ;
 

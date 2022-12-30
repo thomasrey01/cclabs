@@ -5,8 +5,12 @@
 #include "parser_tab.h"
 
 extern struct symbolTable *symtab;
+
+extern struct symbolTable *localvars;
+extern struct symbolTable *globalvars;
+extern struct symbolTable *functions;
+
 extern int scope;
-const int stackSize = 50;
 
 void checkExistance(int idx)
 {
@@ -16,12 +20,39 @@ void checkExistance(int idx)
     }
 }
 
-void addToTable(int idx, enum yytokentype type)
+void addToTable(int idx, enum type varType)
 {
     if (!findInSymTable(idx, symtab)) {
         struct symbol *sym = malloc(sizeof(struct symbol));
         sym->id = idx;
         sym->next = NULL;
-        sym->stack = createStack(stackSize);
     }
+}
+
+void addFunction(int idx)
+{
+    struct symbol *sym = findInSymTable(idx, functions);
+    if(sym == NULL) {
+        sym = malloc(sizeof(struct symbol));
+        sym->id = idx;
+        sym->next = NULL;
+        insertInSymTable(idx, functions, sym);
+    }
+}
+
+void addConst(int idx, int isGlobal, enum type type)
+{
+    struct symbol *sym;
+    if (isGlobal) {
+        sym = findInSymTable(idx, globalvars);
+        
+    } else {
+        sym = findInSymTable(idx, localvars);
+    }
+    if (sym == NULL) {
+        sym = malloc(sizeof(struct symbol));
+        sym->id = idx;
+    }
+    sym->varType = type; 
+    sym->isConst = 1;
 }
