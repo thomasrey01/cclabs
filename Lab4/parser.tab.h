@@ -94,14 +94,15 @@ extern int yydebug;
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 31 "parser.y"
+#line 35 "parser.y"
 
   int ival;     /* used for passing int values from lexer to parser */
   double dval;  /* used for passing double values from lexer to parser */
   /* add here anything you may need */
   /*....*/  
+  struct symbol *sym;
 
-#line 105 "parser.tab.h"
+#line 106 "parser.tab.h"
 
 };
 typedef union YYSTYPE YYSTYPE;

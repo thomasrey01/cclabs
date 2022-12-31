@@ -13,8 +13,12 @@
   extern void showErrorLine();
   extern void initLexer(FILE *f);
   extern void finalizeLexer();
-  extern struct symbolTable *symtab;
   extern int readToken;
+  struct symbol *sym = NULL;
+  int funcSave;
+  struct symbol *createNewSymbol(int idx);
+  void assignType(int type);
+  void printList(struct symbol *symbol);
 %}
 
 %token PROGRAM CONST IDENTIFIER VAR ARRAY RANGE INTNUMBER REALNUMBER OF 
@@ -33,14 +37,18 @@
   double dval;  /* used for passing double values from lexer to parser */
   /* add here anything you may need */
   /*....*/  
+  struct symbol *sym;
 }
 
+%type <ival> ArithExpr
 %type <ival> IDENTIFIER
 %type <ival> BasicType
+%type <ival> TypeSpec
+%type <sym> IdentifierList
 
 %%
 
-program            : PROGRAM IDENTIFIER ';'
+program            : PROGRAM IDENTIFIER ';' { }
                      ConstDecl
                      VarDecl
 	                 FuncProcDecl
@@ -48,7 +56,7 @@ program            : PROGRAM IDENTIFIER ';'
 	                 '.'
                    ;
 
-ConstDecl          : ConstDecl CONST IDENTIFIER RELOPEQ NumericValue ';' { addConst(yylval.ival, 1); /* Problem in this function */ }
+ConstDecl          : ConstDecl CONST IDENTIFIER RELOPEQ NumericValue ';' { addConst(yylval.ival, 1); }
 	               | /* epsilon */
                    ;
 
@@ -56,12 +64,20 @@ NumericValue       : INTNUMBER  /* dont care about this bullshit for now */
                    | REALNUMBER
                    ;
 
-VarDecl            : VarDecl VAR IdentifierList ':' TypeSpec ';' {}
+VarDecl            : VarDecl VAR IdentifierList ':' TypeSpec ';' { 
+                        assignType($5); 
+                        addFromList($3, 1); 
+                        freeListRec($3);
+                    }
 	               | /* epsilon */
                    ;
 
-IdentifierList     : IDENTIFIER { /*checkTable(readToken);*/ }
-                   | IdentifierList ',' IDENTIFIER { /*checkTable(readToken);*/ }
+IdentifierList     : IDENTIFIER { $$ = createNewSymbol(yylval.ival); }
+                   | IdentifierList ',' IDENTIFIER { 
+                        struct symbol *res = createNewSymbol(yylval.ival);
+                        res->next = $1;
+                        $$ = res;
+                        }
                    ;
 
 TypeSpec           : BasicType
@@ -79,7 +95,7 @@ FuncProcDecl       : FuncProcDecl SubProgDecl ';'
 SubProgDecl        : SubProgHeading VarDecl CompoundStatement
                    ;
 
-SubProgHeading     : FUNCTION IDENTIFIER Parameters ':' BasicType ';' { addFunction(yylval.ival, numArguments); }
+SubProgHeading     : FUNCTION IDENTIFIER { funcSave = yylval.ival; } Parameters ':' BasicType ';' { addFunction(funcSave, numArguments); addToLocal(funcSave, $6); }
                    | PROCEDURE IDENTIFIER PossibleParameters ';'
                    ;
 
@@ -94,11 +110,11 @@ ParameterList      : ParamList
                    | ParameterList ';' ParamList
                    ;
 
-ParamList          : VAR IdentifierList ':' TypeSpec { addToLocal(yylval.ival, $4); } // have to add all to local table first or else it cocks it up
-                   | IdentifierList ':' TypeSpec
+ParamList          : VAR IdentifierList ':' TypeSpec { addFromList($2, 1); } 
+                   | IdentifierList ':' TypeSpec { checkSyms($1); }
                    ;                   
 
-CompoundStatement  : BEGINTOK OptionalStatements ENDTOK
+CompoundStatement  : BEGINTOK OptionalStatements ENDTOK { purgeLocalTable(); }
                    ;
 
 OptionalStatements : StatementList
@@ -117,7 +133,7 @@ Statement          : Lhs ASSIGN ArithExpr
                    ;
 
 Lhs                : IDENTIFIER { checkAssign(yylval.ival); }
-                   | IDENTIFIER '[' ArithExpr ']' { }
+                   | IDENTIFIER '[' ArithExpr ']' { checkAssign(yylval.ival); }
                    ;
 
 ProcedureCall      : IDENTIFIER
@@ -162,6 +178,31 @@ ArithExpr          : IDENTIFIER
                    ;
 
 %%
+
+void printList(struct symbol *symbol)
+{
+    struct symbol *temp = symbol;
+    while (temp != NULL) {
+        printf("id: %d\n", temp->id);
+        temp = temp->next;
+    }
+}
+
+struct symbol *createNewSymbol(int idx)
+{
+    struct symbol *res = (struct symbol*)malloc(sizeof(struct symbol));
+    res->id = idx;
+    return res;
+}
+
+void assignType(int type)
+{
+    struct symbol *temp = sym;
+    while (temp != NULL) {
+        temp->varType = type;
+        temp = temp->next;
+    }
+}
 
 void printToken(int token) {
   /* single character tokens */

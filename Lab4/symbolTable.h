@@ -12,7 +12,7 @@ struct symbol;
 struct symbol {
     int id;
     struct symbol *next;
-    enum type varType;
+    int varType;
     int isConst;
     int isFunc;
     int numArguments;
