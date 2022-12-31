@@ -33,13 +33,11 @@ void insertInSymTable(int idx, struct symbolTable *table, struct symbol *symbol)
 
 struct symbol *findInSymTable(int idx, struct symbolTable *table)
 {
-    printf("index is: %d\n", idx);
     int pos = idx % table->size;
     if (table->symbols[pos] != NULL) {
         struct symbol *symbolPtr = table->symbols[pos];
         while (symbolPtr != NULL) {
             if (symbolPtr->id == idx) {
-                printf("Grabbed from index %d\n", idx);
                 return symbolPtr;
             }
             symbolPtr = symbolPtr->next;

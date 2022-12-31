@@ -17,8 +17,9 @@
   struct symbol *sym = NULL;
   int funcSave;
   struct symbol *createNewSymbol(int idx);
-  void assignType(int type);
+  void assignType(int type, struct symbol *sym);
   void printList(struct symbol *symbol);
+  int countList(struct symbol *sym);
 %}
 
 %token PROGRAM CONST IDENTIFIER VAR ARRAY RANGE INTNUMBER REALNUMBER OF 
@@ -45,7 +46,12 @@
 %type <ival> BasicType
 %type <ival> TypeSpec
 %type <sym> IdentifierList
+%type <sym> ArithExprList
 
+%type <sym> PossibleParameters 
+%type <sym> Parameters 
+%type <sym> ParameterList
+%type <sym> ParamList
 %%
 
 program            : PROGRAM IDENTIFIER ';' { }
@@ -65,7 +71,7 @@ NumericValue       : INTNUMBER  /* dont care about this bullshit for now */
                    ;
 
 VarDecl            : VarDecl VAR IdentifierList ':' TypeSpec ';' { 
-                        assignType($5); 
+                        assignType($5, $3); 
                         addFromList($3, 1); 
                         freeListRec($3);
                     }
@@ -80,8 +86,8 @@ IdentifierList     : IDENTIFIER { $$ = createNewSymbol(yylval.ival); }
                         }
                    ;
 
-TypeSpec           : BasicType
-                   | ARRAY '[' INTNUMBER RANGE INTNUMBER ']' OF BasicType
+TypeSpec           : BasicType { $$ = $1; }
+                   | ARRAY '[' INTNUMBER RANGE INTNUMBER ']' OF BasicType { $$ = $8; }
                    ;
 
 BasicType          : INTEGER { $$ = 0; }
@@ -95,19 +101,24 @@ FuncProcDecl       : FuncProcDecl SubProgDecl ';'
 SubProgDecl        : SubProgHeading VarDecl CompoundStatement
                    ;
 
-SubProgHeading     : FUNCTION IDENTIFIER { funcSave = yylval.ival; } Parameters ':' BasicType ';' { addFunction(funcSave, numArguments); addToLocal(funcSave, $6); }
-                   | PROCEDURE IDENTIFIER PossibleParameters ';'
+SubProgHeading     : FUNCTION IDENTIFIER { funcSave = yylval.ival; } Parameters ':' BasicType ';' { 
+                   addFunction(funcSave, countList($4), 1);
+                   addToLocal(funcSave, $6);
+}
+                   | PROCEDURE IDENTIFIER { funcSave = yylval.ival; } PossibleParameters ';' { 
+                    addFunction(funcSave, countList($4), 2);
+}
                    ;
 
-PossibleParameters : Parameters
-                   | /* epsilon */
+PossibleParameters : Parameters {$$ = $1;}
+                   | /* epsilon */ {$$ = NULL;}
                    ;
 
-Parameters         : '(' ParameterList ')'
+Parameters         : '(' ParameterList ')' {$$ = $2;}
                    ;
 
-ParameterList      : ParamList
-                   | ParameterList ';' ParamList
+ParameterList      : ParamList { $$ = $1; }
+                   | ParameterList ';' ParamList { $1->next = $3; }
                    ;
 
 ParamList          : VAR IdentifierList ':' TypeSpec { addFromList($2, 1); } 
@@ -137,7 +148,7 @@ Lhs                : IDENTIFIER { checkAssign(yylval.ival); }
                    ;
 
 ProcedureCall      : IDENTIFIER
-                   | IDENTIFIER '(' ArithExprList ')'
+                   | IDENTIFIER '(' ArithExprList ')' {checkFunction(yylval.ival, countList($3));}
                    ;
 
 Guard              : BoolAtom
@@ -158,13 +169,17 @@ Relop              : RELOPLT
                    | RELOPGT
                    ;
 
-ArithExprList      : ArithExpr { numArguments++; }
-                   | ArithExprList ',' ArithExpr { numArguments++; }
+ArithExprList      : ArithExpr { $$ = createNewSymbol(0); }
+                   | ArithExprList ',' ArithExpr { 
+                    struct symbol *res = createNewSymbol(0);
+                    res->next = $1;
+                    $$ = res;
+}
                    ;
 
 ArithExpr          : IDENTIFIER
                    | IDENTIFIER '[' ArithExpr ']'
-                   | IDENTIFIER '(' ArithExprList ')' { checkFunction(yylval.ival, numArguments); }
+                   | IDENTIFIER '(' ArithExprList ')' { checkFunction(yylval.ival, countList($3)); }
                    | INTNUMBER
                    | REALNUMBER
                    | ArithExpr '+' ArithExpr
@@ -179,6 +194,16 @@ ArithExpr          : IDENTIFIER
 
 %%
 
+int countList(struct symbol *sym)
+{
+    int cnt = 0;
+    struct symbol *temp = sym;
+    while (temp != NULL) {
+        cnt++;
+        temp = temp->next;
+    }
+}
+
 void printList(struct symbol *symbol)
 {
     struct symbol *temp = symbol;
@@ -190,12 +215,14 @@ void printList(struct symbol *symbol)
 
 struct symbol *createNewSymbol(int idx)
 {
-    struct symbol *res = (struct symbol*)malloc(sizeof(struct symbol));
+    struct symbol *res;
+    res = (struct symbol*)malloc(sizeof(struct symbol));
     res->id = idx;
+    res->next = NULL;
     return res;
 }
 
-void assignType(int type)
+void assignType(int type, struct symbol *sym)
 {
     struct symbol *temp = sym;
     while (temp != NULL) {

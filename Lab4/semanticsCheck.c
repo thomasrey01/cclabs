@@ -15,9 +15,8 @@ void initTables()
     functions = createSymbolTable(tableSize);
 }
 
-void addFunction(int idx, int numArgs)
+void addFunction(int idx, int numArgs, int funcType)
 {
-    printf("adding token: %d\n", idx);
     struct symbol *sym = findInSymTable(idx, functions);
     if(sym == NULL) {
         sym = malloc(sizeof(struct symbol));
@@ -25,10 +24,9 @@ void addFunction(int idx, int numArgs)
         sym->next = NULL;
     }
     sym->isConst = 0;
-    sym->isFunc = 1;
+    sym->isFunc = funcType;
     sym->numArguments = numArgs;
     insertInSymTable(idx, functions, sym);
-    insertInSymTable(idx, localvars, sym);
 }
 
 void checkAssign(int idx)
@@ -38,11 +36,13 @@ void checkAssign(int idx)
         sym = findInSymTable(idx, localvars);
         if (sym == NULL) {
             printf("undefined symbol\n");
+            exit(EXIT_SUCCESS);
             return;
         }
     }
     if (sym->isConst) {
         printf("Cannot assign to constant variable\n");
+        exit(EXIT_SUCCESS);
     }
 }
 
@@ -68,15 +68,18 @@ void addConst(int idx, int isGlobal)
 
 void checkFunction(int idx, int args)
 {
-    printf("Checking token: %d\n", idx);
     struct symbol *sym = findInSymTable(idx, functions);
     if (sym == NULL) {
-        printf("Undefined function call");
-        return;
+        printf("Undefined function call\n");
+        exit(EXIT_SUCCESS);
     }
     if (sym->numArguments != args) {
-        printf("Invalid number of arguments");
-        return;
+        printf("Invalid number of arguments\n");
+        exit(EXIT_SUCCESS);
+    }
+    if (sym->isFunc == 2) {
+        printf("Cannot return value from procedure\n");
+        exit(EXIT_SUCCESS);
     }
 }
 
@@ -117,6 +120,7 @@ void purgeLocalTable()
 {
     for (int i = 0; i < tableSize; i++) {
         freeListRec(localvars->symbols[i]);
+        localvars->symbols[i] = NULL;
     }
 }
 

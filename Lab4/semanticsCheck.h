@@ -10,15 +10,13 @@ void checkType(char *s);
 
 void checkAssign(int idx);
 
-void addFunction(int idx, int numArgs);
-
 void addConst(int idx, int isGlobal);
 
 void addToLocal(int idx, int type);
 
 void checkFunction(int idx, int args);
 
-void addFunction(int idx, int numArgs);
+void addFunction(int idx, int numArgs, int funcType);
 
 void purgeLocalTable();
 
