@@ -29,20 +29,12 @@ struct Stack {
     int top;
 };
 
-struct Stack *newStack();
-
 void initTables();
-
-void pushInStack(struct Stack *stack, struct identifierProp *token);
-
-struct identifierProp *popInStack(struct Stack *stack);
 
 struct symbolTable *createSymbolTable(int size);
 
 void insertInSymTable(int idx, struct symbolTable *table, struct symbol *symbol);
 
 struct symbol *findInSymTable(int idx, struct symbolTable *table);
-
-int isEmptyStack(struct Stack *stack);
 
 #endif

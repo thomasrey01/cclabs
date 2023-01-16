@@ -4,6 +4,7 @@
 #include "strtab.h"
 #include "symbolTable.h"
 #include "semanticsCheck.h"
+#include "linkedList.h"
 
   int numArguments = 0;
   void yyerror(char *msg);    /* forward declaration */

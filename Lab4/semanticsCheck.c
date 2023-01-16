@@ -146,7 +146,7 @@ void checkSyms(struct symbol *sym)
     }
 }
 
-void addFromList(struct symbol* sym, int table)
+void addFromList(struct node* sym, int table)
 {
     struct symbol *temp = sym;
     int type = sym->varType;
