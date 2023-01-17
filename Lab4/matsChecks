@@ -1,0 +1,92 @@
+# Checks:
+## Declarations
+Check if an identifier already exists in the current scope.
+
+
+## Assignments
+### Defined
+Check if the lhs of the assignment has been defined.
+
+### Procedure
+Check if one doesn't try to assign the (non existent) result of a procedure
+call.
+
+### Constant
+Check if the lhs of the assignment is not a constant.
+
+### Variable
+Check if the type of the lhs of the assignment corresponds with the type of the
+rhs.
+
+This is checked for both 'regular' variables, arrays, and subscripted arrays.
+
+
+## Arrays
+### Defined
+Check if the array has been defined.
+
+### Type
+- Check if the subscripted identifier is an array.
+- Check if the value used to subscript is an integer.
+
+
+## Function calls
+### Defined
+Check if the function that is called is defined.
+
+### Type
+Check if the called identifier corresponds to a function.
+
+### Parameters
+- Check if the number of parameters passed matches the expected number.
+- Check if the passed parameters match the expected parameters in both type and
+  order.
+- Check if parameters that should be passed by reference are.
+
+
+## Mathematical operations
+### DIV
+Check that integer division (`DIV`) does not take a real.
+
+### MOD
+Check that `MOD` does not take a real.
+
+# Warnings
+**Warnings are commented out to ensure they don't mess with checking of
+ACCEPTED in the valid .out files**
+
+- Warn when a variable is declared, but is not used. (Assigning a value to the
+  variable counts as using, as it could be a pass by reference situation. This
+  does not always have to be true though. Something to change in the future
+  perhaps.)
+- Warn when casting a real to an integer
+
+
+# Notes
+## Casting
+- The assumption is made that arrays cannot be cast to arrays of a different
+  type.
+- The assumption was made that implicit casts happen between reals and integers
+  on assignment to a variable of the other type, or when passed to a function
+  where the parameter has a different type. Not when calling mathematical
+  operations such as `div` or `mod`.
+
+## Assignment
+The assumption was made that the same identifier may not exist more than once
+in a scope.
+
+## DIV and /
+Checked as integer division and floating point division.
+
+- `div` cannot take a real, and will result in an error.
+- `/` can take an integer, but will return a real even if supplied with two
+  integers.
+
+
+## MOD
+It is not clear whether MOD should be able to take values other than integers.
+Despite the expression mentioned on
+https://www.freepascal.org/docs-html/current/ref/refsu44.html#x151-17500012.8.1
+,
+I have decided to not allow this based on the free pascal compiler not allowing
+it unless including the math unit. 

@@ -2,7 +2,9 @@
 
 #define SEMANTICSCHECK_H
 
+#include "linkedList.h"
 #include "symbolTable.h"
+
 
 void checkSyms(struct symbol *sym);
 
@@ -16,7 +18,7 @@ void addToLocal(int idx, int type);
 
 void checkFunction(int idx, int args);
 
-void addFunction(int idx, int numArgs, int funcType);
+void addFunction(int idx, struct node *args, int funcType);
 
 void purgeLocalTable();
 

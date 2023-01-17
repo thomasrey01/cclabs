@@ -2,6 +2,8 @@
 
 #define SYMBOLTABLE_H
 
+#include "linkedList.h"
+
 enum type {
     INT,
     FLOAT
@@ -15,7 +17,7 @@ struct symbol {
     int varType;
     int isConst;
     int isFunc;
-    int numArguments;
+    struct node* args;
 };
 
 struct symbolTable {

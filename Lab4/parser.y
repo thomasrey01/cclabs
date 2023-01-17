@@ -6,6 +6,8 @@
 #include "semanticsCheck.h"
 #include "linkedList.h"
 
+
+  int savedType;
   int numArguments = 0;
   void yyerror(char *msg);    /* forward declaration */
   /* exported by the lexer (made with flex) */
@@ -40,51 +42,55 @@
   /* add here anything you may need */
   /*....*/  
   struct symbol *sym;
+  struct node* iden;
 }
 
 %type <ival> ArithExpr
+%type <ival> NumericValue
 %type <ival> IDENTIFIER
 %type <ival> BasicType
 %type <ival> TypeSpec
-%type <sym> IdentifierList
+%type <iden> IdentifierList
 %type <sym> ArithExprList
-
+%type <iden> ConstDecl
 %type <sym> PossibleParameters 
 %type <sym> Parameters 
 %type <sym> ParameterList
 %type <sym> ParamList
-%%
+%% //Change these later
 
-program            : PROGRAM IDENTIFIER ';' { }
-                     ConstDecl
-                     VarDecl
+program            : PROGRAM IDENTIFIER ';'
+                     ConstDecl { addConsts($4); } //to implement
+                     VarDecl { addToTable($7); } //to implement
 	                 FuncProcDecl
 	                 CompoundStatement
 	                 '.'
                    ;
 
-ConstDecl          : ConstDecl CONST IDENTIFIER RELOPEQ NumericValue ';' { addConst(yylval.ival, 1); }
-	               | /* epsilon */
+ConstDecl          : ConstDecl CONST IDENTIFIER RELOPEQ NumericValue ';' { 
+                    $$ = createNewNode(yylval.ival);
+                    $$->type = $5;
+                    $$->next = $1;
+}
+	               | /* epsilon */ { $$ = NULL; }
                    ;
 
-NumericValue       : INTNUMBER  /* dont care about this bullshit for now */
-                   | REALNUMBER
+NumericValue       : INTNUMBER { $$ = 0; }
+                   | REALNUMBER { $$ = 1; }
                    ;
 
 VarDecl            : VarDecl VAR IdentifierList ':' TypeSpec ';' { 
-                        assignType($5, $3); 
-                        addFromList($3, 1); 
-                        freeListRec($3);
-                    }
-	               | /* epsilon */
+                        addType($3, $5); 
+                        appendToList($3, $1);
+                    } // This happens in the global variable, fix later.
+	               | /* epsilon */ { $$ = NULL; }
                    ;
 
-IdentifierList     : IDENTIFIER { $$ = createNewSymbol(yylval.ival); }
+IdentifierList     : IDENTIFIER { $$ = createNewNode(yylval.ival); }
                    | IdentifierList ',' IDENTIFIER { 
-                        struct symbol *res = createNewSymbol(yylval.ival);
-                        res->next = $1;
-                        $$ = res;
-                        }
+                        $$ = createNewNode(yylval.ival);
+                        $$->next = $1;
+}
                    ;
 
 TypeSpec           : BasicType { $$ = $1; }
@@ -103,11 +109,11 @@ SubProgDecl        : SubProgHeading VarDecl CompoundStatement
                    ;
 
 SubProgHeading     : FUNCTION IDENTIFIER { funcSave = yylval.ival; } Parameters ':' BasicType ';' { 
-                   addFunction(funcSave, countList($4), 1);
+                   addFunction(funcSave, $4, 1);
                    addToLocal(funcSave, $6);
 }
                    | PROCEDURE IDENTIFIER { funcSave = yylval.ival; } PossibleParameters ';' { 
-                    addFunction(funcSave, countList($4), 2);
+                    addFunction(funcSave, $4, 2);
 }
                    ;
 
@@ -170,7 +176,7 @@ Relop              : RELOPLT
                    | RELOPGT
                    ;
 
-ArithExprList      : ArithExpr { $$ = createNewSymbol(0); }
+ArithExprList      : ArithExpr { $$ = createNewSymbol(0); } //makes no sense????
                    | ArithExprList ',' ArithExpr { 
                     struct symbol *res = createNewSymbol(0);
                     res->next = $1;
@@ -186,9 +192,9 @@ ArithExpr          : IDENTIFIER
                    | ArithExpr '+' ArithExpr
                    | ArithExpr '-' ArithExpr
                    | ArithExpr '*' ArithExpr
-                   | ArithExpr '/' ArithExpr
-                   | ArithExpr DIV ArithExpr
-                   | ArithExpr MOD ArithExpr
+                   | ArithExpr '/' ArithExpr //This should always return a real
+                   | ArithExpr DIV ArithExpr //This should always return an int, cant take real as param
+                   | ArithExpr MOD ArithExpr //This should always return an int
                    | '-' ArithExpr
                    | '(' ArithExpr ')'
                    ;

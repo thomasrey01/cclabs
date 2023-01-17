@@ -9,7 +9,7 @@ struct node {
     struct node* next;
 };
 
-struct node *createNewNode(int idx, int type);
+struct node *createNewNode(int idx);
 void freeList(struct node *l);
 int isSameList(struct node *l1, struct node *l2);
 

@@ -15,7 +15,7 @@ void initTables()
     functions = createSymbolTable(tableSize);
 }
 
-void addFunction(int idx, int numArgs, int funcType)
+void addFunction(int idx, struct node *args, int funcType)
 {
     struct symbol *sym = findInSymTable(idx, functions);
     if(sym == NULL) {
@@ -25,7 +25,7 @@ void addFunction(int idx, int numArgs, int funcType)
     }
     sym->isConst = 0;
     sym->isFunc = funcType;
-    sym->numArguments = numArgs;
+    sym->args = args;
     insertInSymTable(idx, functions, sym);
 }
 
