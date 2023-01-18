@@ -4,9 +4,20 @@
 
 int tableSize = 100;
 
+extern int linenr;
+
 struct symbolTable *localvars;
 struct symbolTable *globalvars;
 struct symbolTable *functions;
+
+void raiseError(char *msg) {
+    printf("Line %d: ", linenr);
+    printf("%s\n", msg);
+    freeTable(localvars);
+    freeTable(globalvars);
+    freeTable(functions);
+    exit(EXIT_SUCCESS);
+}
 
 void initTables()
 {
@@ -35,52 +46,81 @@ void checkAssign(int idx)
     if (sym == NULL) {
         sym = findInSymTable(idx, localvars);
         if (sym == NULL) {
-            printf("undefined symbol\n");
-            exit(EXIT_SUCCESS);
-            return;
+            raiseError("Undefined symbol.");
         }
     }
     if (sym->isConst) {
-        printf("Cannot assign to constant variable\n");
-        exit(EXIT_SUCCESS);
+        raiseError("Cannot assign to constant variable");
     }
 }
 
-void addConst(int idx, int isGlobal)
+void addConsts(struct node *l, int tab)
 {
-    struct symbol *sym;
-    if (isGlobal) {
-        sym = findInSymTable(idx, globalvars);
-    } else {
-        sym = findInSymTable(idx, localvars);
-    }
-    if (sym == NULL) {
-        sym = malloc(sizeof(struct symbol));
-        sym->id = idx;
-    }
-    sym->isConst = 1;
-    if (isGlobal) {
-        insertInSymTable(idx, globalvars, sym);
-    } else {
-        insertInSymTable(idx, localvars, sym);
+    struct node *ptr = l;
+    struct symbolTable *table;
+    if (tab == 0) table = globalvars;
+    else table = localvars;
+    while (ptr != NULL) {
+        struct symbol *sym = (struct symbol*)malloc(sizeof(struct symbol));
+        sym->isConst = 1;
+        sym->id = ptr->idx;
+        sym->isFunc = 0;
+        sym->varType = ptr->type;
+        sym->next = NULL;
+        sym->args = NULL;
+        insertInSymTable(sym->id, table, sym); 
+        ptr = ptr->next;
     }
 }
 
-void checkFunction(int idx, int args)
+void addVars(struct node *l, int tab)
+{
+    struct node *ptr = l;
+    struct symbolTable *table;
+    if (tab == 0) table = globalvars;
+    else table = localvars;
+    while (ptr != NULL) {
+        struct symbol *sym = (struct symbol*)malloc(sizeof(struct symbol));
+        sym->isConst = 0;
+        sym->isFunc = 0;
+        sym->varType = ptr->type;
+        sym->next = NULL;
+        sym->id = ptr->idx;
+        sym->args = NULL;
+        insertInSymTable(sym->id, table, sym);
+        ptr = ptr->next;
+    }
+}
+
+void checkFunction(int idx, struct node *args)
 {
     struct symbol *sym = findInSymTable(idx, functions);
     if (sym == NULL) {
-        printf("Undefined function call\n");
-        exit(EXIT_SUCCESS);
+        raiseError("Undefined function call.");
     }
-    if (sym->numArguments != args) {
-        printf("Invalid number of arguments\n");
-        exit(EXIT_SUCCESS);
+    if (sym->isFunc != 1) {
+        raiseError("Call is not a function.");
     }
-    if (sym->isFunc == 2) {
-        printf("Cannot return value from procedure\n");
-        exit(EXIT_SUCCESS);
+    struct node *funcArgs = sym->args;
+
+    if (!isSameList(args, funcArgs)) {
+        raiseError("Wrong argument(s) in function call");
     }
+}   
+
+void checkProcedure(int idx, struct node *args)
+{
+    struct symbol *sym = findInSymTable(idx, functions);
+    if (sym == NULL) {
+        raiseError("Undefined procedure call.");
+    } if (sym->isFunc != 2) {
+        raiseError("Call is not a procedure.");
+    }
+    struct node *funcArgs = sym->args;
+    if (!isSameList(args, funcArgs)) {
+        raiseError("Wrong argyment(s) in procedure call.");
+    }
+
 }
 
 void addToLocal(int idx, int type)
@@ -109,12 +149,7 @@ void addGlobal(int idx, int type)
     insertInSymTable(idx, globalvars, sym);
 }
 
-void freeListRec(struct symbol *sym)
-{
-    if (sym == NULL) return;
-    freeListRec(sym->next);
-    free(sym);
-}
+
 
 void purgeLocalTable()
 {
@@ -131,8 +166,7 @@ void checkTable(int idx)
     if (sym == NULL) {
         sym = findInSymTable(idx, globalvars);
         if (sym == NULL) {
-            printf("Undefined symbol %d \n", idx);
-            exit(1);
+            raiseError("Undefined symbol\n"); 
         }
     }
 }
@@ -146,16 +180,34 @@ void checkSyms(struct symbol *sym)
     }
 }
 
-void addFromList(struct node* sym, int table)
+
+int getType(int idx)
 {
-    struct symbol *temp = sym;
-    int type = sym->varType;
-    while (temp != NULL) {
-        if (table == 0) {
-            addToLocal(temp->id, temp->varType);
-        } else if (table == 1) {
-            addGlobal(temp->id, temp->varType);
-        }
-        temp = temp->next;
+    struct symbol *sym = findInSymTable(idx, localvars);
+    if (sym != NULL) {
+        return sym->varType;
+    }
+    sym = findInSymTable(idx, globalvars);
+    if (sym != NULL) {
+        return sym->varType;
+    }
+    raiseError("Uninitialised value.");
+    return -1;
+}
+
+int getFuncType(int idx)
+{
+    struct symbol *sym = findInSymTable(idx, functions);
+    if (sym == NULL) {
+        raiseError("Unintialised function.");
+        return -1;
+    }
+    return sym->varType;
+}
+
+void noReal(int val1, int val2)
+{
+    if (val1 == 1 || val2 == 1) {
+        raiseError("Cannot parse real value to integer operation.");
     }
 }

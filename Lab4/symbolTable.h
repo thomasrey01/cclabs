@@ -39,4 +39,8 @@ void insertInSymTable(int idx, struct symbolTable *table, struct symbol *symbol)
 
 struct symbol *findInSymTable(int idx, struct symbolTable *table);
 
+void freeTable(struct symbolTable *table);
+
+void freeListRec(struct symbol *sym);
+
 #endif

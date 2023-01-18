@@ -5,6 +5,13 @@
 
 extern int tableSize;
 
+void freeListRec(struct symbol *sym)
+{
+    if (sym == NULL) return;
+    freeListRec(sym->next);
+    free(sym);
+}
+
 struct symbolTable *createSymbolTable(int size)
 {
     struct symbolTable *table;
@@ -46,3 +53,11 @@ struct symbol *findInSymTable(int idx, struct symbolTable *table)
     return NULL;
 }
 
+void freeTable(struct symbolTable *table)
+{
+    for (int i = 0; i < tableSize; i++) {
+        if (table->symbols != NULL) {
+            freeListRec(table->symbols[i]);
+        }
+    }
+}

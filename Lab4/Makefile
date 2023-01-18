@@ -1,5 +1,8 @@
-all: strtab semanticsCheck parser lexer symbolTable
-	gcc -g -O2 strtab.o semanticsCheck.o parser.o lexer.o symbolTable.o -lfl -lm
+all: strtab stack linkedList semanticsCheck parser lexer symbolTable
+	gcc -g -O2 strtab.o stack.o linkedList.o semanticsCheck.o parser.o lexer.o symbolTable.o -lfl -lm
+
+stack: stack.c stack.h
+	gcc -g -O2 -c stack.c
 
 semanticsCheck:semanticsCheck.c semanticsCheck.h
 	gcc -g -O2 -c semanticsCheck.c
@@ -20,7 +23,8 @@ lexer: lexer.fl
 symbolTable: symbolTable.c symbolTable.h
 	gcc -g -O2 -c symbolTable.c
 
-
+linkedList: linkedList.c linkedList.h
+	gcc -g -O2 -c linkedList.c
 
 clean:
 	rm -f *~

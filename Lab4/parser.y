@@ -5,10 +5,10 @@
 #include "symbolTable.h"
 #include "semanticsCheck.h"
 #include "linkedList.h"
+#include "stack.h"
 
-
-  int savedType;
-  int numArguments = 0;
+  struct stack *s;
+  int max(int val1, int val2);
   void yyerror(char *msg);    /* forward declaration */
   /* exported by the lexer (made with flex) */
   extern int yylex(void);
@@ -28,7 +28,7 @@
 %token PROGRAM CONST IDENTIFIER VAR ARRAY RANGE INTNUMBER REALNUMBER OF 
        FUNCTION PROCEDURE BEGINTOK ENDTOK ASSIGN IF THEN ELSE WHILE DO
        RELOPLT RELOPLEQ RELOPEQ RELOPNEQ RELOPGEQ RELOPGT INTEGER REAL
-       AND OR NOT DIV MOD
+       AND OR NOT DIV MOD SKIP
 
 %left '+' '-'
 %left '*' '/' DIV MOD
@@ -41,7 +41,6 @@
   double dval;  /* used for passing double values from lexer to parser */
   /* add here anything you may need */
   /*....*/  
-  struct symbol *sym;
   struct node* iden;
 }
 
@@ -50,18 +49,20 @@
 %type <ival> IDENTIFIER
 %type <ival> BasicType
 %type <ival> TypeSpec
+
+%type <iden> VarDecl
 %type <iden> IdentifierList
-%type <sym> ArithExprList
+%type <iden> ArithExprList
 %type <iden> ConstDecl
-%type <sym> PossibleParameters 
-%type <sym> Parameters 
-%type <sym> ParameterList
-%type <sym> ParamList
+%type <iden> PossibleParameters 
+%type <iden> Parameters 
+%type <iden> ParameterList
+%type <iden> ParamList
 %% //Change these later
 
 program            : PROGRAM IDENTIFIER ';'
-                     ConstDecl { addConsts($4); } //to implement
-                     VarDecl { addToTable($7); } //to implement
+                     ConstDecl { addConsts($4, 0); } //to implement
+                     VarDecl { addVars($6, 0); } //to implement
 	                 FuncProcDecl
 	                 CompoundStatement
 	                 '.'
@@ -81,12 +82,13 @@ NumericValue       : INTNUMBER { $$ = 0; }
 
 VarDecl            : VarDecl VAR IdentifierList ':' TypeSpec ';' { 
                         addType($3, $5); 
-                        appendToList($3, $1);
-                    } // This happens in the global variable, fix later.
+                        appendToList($3, $1); // this function may not work? Fix later
+                        $$ = $3;
+                    }
 	               | /* epsilon */ { $$ = NULL; }
                    ;
 
-IdentifierList     : IDENTIFIER { $$ = createNewNode(yylval.ival); }
+IdentifierList     : IDENTIFIER { $$ = createNewNode(yylval.ival); $$->next = NULL; }
                    | IdentifierList ',' IDENTIFIER { 
                         $$ = createNewNode(yylval.ival);
                         $$->next = $1;
@@ -105,15 +107,19 @@ FuncProcDecl       : FuncProcDecl SubProgDecl ';'
                    | /* epsilon */
                    ;
 
-SubProgDecl        : SubProgHeading VarDecl CompoundStatement
+SubProgDecl        : SubProgHeading VarDecl { addVars($2, 1); } CompoundStatement { purgeLocalTable(); }
                    ;
 
-SubProgHeading     : FUNCTION IDENTIFIER { funcSave = yylval.ival; } Parameters ':' BasicType ';' { 
+SubProgHeading     : FUNCTION IDENTIFIER { pushStack(yylval.ival, s); } Parameters ':' BasicType ';' { 
+                   funcSave = popStack(s);
                    addFunction(funcSave, $4, 1);
                    addToLocal(funcSave, $6);
+                   addVars($4, 1);
 }
-                   | PROCEDURE IDENTIFIER { funcSave = yylval.ival; } PossibleParameters ';' { 
+                   | PROCEDURE IDENTIFIER { pushStack(yylval.ival, s); } PossibleParameters ';' { 
+                    funcSave = popStack(s);
                     addFunction(funcSave, $4, 2);
+                    addVars($4, 1);
 }
                    ;
 
@@ -125,14 +131,14 @@ Parameters         : '(' ParameterList ')' {$$ = $2;}
                    ;
 
 ParameterList      : ParamList { $$ = $1; }
-                   | ParameterList ';' ParamList { $1->next = $3; }
+                   | ParameterList ';' ParamList { appendToList($3, $1); $$ = $3; }
                    ;
 
-ParamList          : VAR IdentifierList ':' TypeSpec { addFromList($2, 1); } 
-                   | IdentifierList ':' TypeSpec { checkSyms($1); }
+ParamList          : VAR IdentifierList ':' TypeSpec { makeReference($2, 1); addType($2, $4); $$ = $2; } 
+                   | IdentifierList ':' TypeSpec { makeReference($1, 0); addType($1, $3); $$ = $1; }
                    ;                   
 
-CompoundStatement  : BEGINTOK OptionalStatements ENDTOK { purgeLocalTable(); }
+CompoundStatement  : BEGINTOK OptionalStatements ENDTOK
                    ;
 
 OptionalStatements : StatementList
@@ -148,14 +154,16 @@ Statement          : Lhs ASSIGN ArithExpr
                    | CompoundStatement
                    | IF Guard THEN Statement ELSE Statement
                    | WHILE Guard DO Statement
+                   | SKIP
                    ;
+
 
 Lhs                : IDENTIFIER { checkAssign(yylval.ival); }
                    | IDENTIFIER '[' ArithExpr ']' { checkAssign(yylval.ival); }
                    ;
 
-ProcedureCall      : IDENTIFIER
-                   | IDENTIFIER '(' ArithExprList ')' {checkFunction(yylval.ival, countList($3));}
+ProcedureCall      : IDENTIFIER { checkProcedure(yylval.ival, NULL); }
+                   | IDENTIFIER { pushStack(yylval.ival, s); } '(' ArithExprList ')' { checkProcedure(popStack(s), $4);}
                    ;
 
 Guard              : BoolAtom
@@ -176,30 +184,43 @@ Relop              : RELOPLT
                    | RELOPGT
                    ;
 
-ArithExprList      : ArithExpr { $$ = createNewSymbol(0); } //makes no sense????
-                   | ArithExprList ',' ArithExpr { 
-                    struct symbol *res = createNewSymbol(0);
-                    res->next = $1;
-                    $$ = res;
+ArithExprList      : ArithExpr { $$ = createNewNode(-1); $$->type = $1; $$->next = NULL;  } 
+                   | ArithExprList ',' ArithExpr {
+                    $$ = createNewNode(-1);
+                    $$->type = $3;
+                    $$->next = $1;
 }
                    ;
 
-ArithExpr          : IDENTIFIER
-                   | IDENTIFIER '[' ArithExpr ']'
-                   | IDENTIFIER '(' ArithExprList ')' { checkFunction(yylval.ival, countList($3)); }
-                   | INTNUMBER
-                   | REALNUMBER
-                   | ArithExpr '+' ArithExpr
-                   | ArithExpr '-' ArithExpr
-                   | ArithExpr '*' ArithExpr
-                   | ArithExpr '/' ArithExpr //This should always return a real
-                   | ArithExpr DIV ArithExpr //This should always return an int, cant take real as param
-                   | ArithExpr MOD ArithExpr //This should always return an int
-                   | '-' ArithExpr
-                   | '(' ArithExpr ')'
+ArithExpr          : IDENTIFIER { $$ = getType(yylval.ival); }
+                   | IDENTIFIER { pushStack(yylval.ival, s); }'[' ArithExpr ']' {
+                    $$ = getType(popStack(s));
+        
+}
+                   | IDENTIFIER { pushStack(yylval.ival, s); } '(' ArithExprList ')' { 
+                    funcSave = popStack(s);
+                    $$ = getFuncType(funcSave);
+                    checkFunction(funcSave, $4); 
+                    
+}
+                   | INTNUMBER { $$ = 0; }
+                   | REALNUMBER { $$ = 1; }
+                   | ArithExpr '+' ArithExpr { $$ = max($1, $3); }
+                   | ArithExpr '-' ArithExpr { $$ = max($1, $3); }
+                   | ArithExpr '*' ArithExpr { $$ = max($1, $3); }
+                   | ArithExpr '/' ArithExpr { $$ = 1; }
+                   | ArithExpr DIV ArithExpr { $$ = 0, noReal($1, $3);}
+                   | ArithExpr MOD ArithExpr { $$ = 0; noReal($1, $3);}
+                   | '-' ArithExpr { $$ = $2; }
+                   | '(' ArithExpr ')' { $$ = $2; }
                    ;
 
 %%
+
+int max(int val1, int val2)
+{
+    return (val1 > val2 ? val1 : val2);
+}
 
 int countList(struct symbol *sym)
 {
@@ -218,15 +239,6 @@ void printList(struct symbol *symbol)
         printf("id: %d\n", temp->id);
         temp = temp->next;
     }
-}
-
-struct symbol *createNewSymbol(int idx)
-{
-    struct symbol *res;
-    res = (struct symbol*)malloc(sizeof(struct symbol));
-    res->id = idx;
-    res->next = NULL;
-    return res;
 }
 
 void assignType(int type, struct symbol *sym)
@@ -310,7 +322,7 @@ int main(int argc, char *argv[]) {
     return EXIT_FAILURE;
   }
   initTables();
-
+  s = newStack();
   
   FILE *f = stdin;
   if (argc == 2) {

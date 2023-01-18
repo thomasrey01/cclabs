@@ -6,6 +6,8 @@ struct node* createNewNode(int idx)
 {
     struct node *l = (struct node*)malloc(sizeof(struct node));
     l->idx = idx;
+    l->isRef = 0;
+    l->type = 0;
     l->next = NULL;
     return l;
 }
@@ -15,6 +17,13 @@ void addType(struct node *l, int type)
     if (l == NULL) return;
     l->type = type;
     addType(l->next, type);
+}
+
+void makeReference(struct node *l, int ref)
+{
+    if (l == NULL) return;
+    l->isRef = ref;
+    makeReference(l->next, ref);
 }
 
 void freeList(struct node *l)
@@ -29,7 +38,7 @@ int isSameList(struct node *l1, struct node *l2)
     if (l1 == NULL && l2 == NULL) return 1;
     if (l1 == NULL) return 0;
     if (l2 == NULL) return 0;
-    return ((l1->idx == l2->idx) && (l1->type == l2->type) && isSameList(l1->next, l2->next));
+    return ((l1->type <= l2->type) && isSameList(l1->next, l2->next));
 }
 
 void appendToList(struct node *front, struct node *end)
