@@ -78,7 +78,7 @@ void assignValue(struct node *var, struct node *value)
 struct arithNode *createArithNode(int val)
 {
     struct arithNode *node = (struct arithNode*)malloc(sizeof(struct arithNode));
-    node->val = val;
+    node->idx = val;
     return node;
 }
 
@@ -90,4 +90,5 @@ int getArithLength(struct arithNode *expr)
         len++;
         l = l->next;
     }
+    return len;
 }

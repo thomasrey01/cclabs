@@ -1,40 +1,49 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "codegen.h"
-#include "semanticsCheck.h"
 #include "strtab.h"
-#include "symbolTable.h"
 
 extern char *stringTable;
 
+int tabSize = 100;
 int lblCnt = 0;
 int varCnt = 0;
+int *vartable;
 
-struct symbol *getSymbol(int idx)
+void initTable()
 {
-    struct symbol *sym = findInSymTable(idx, localvars);
-    if (sym == NULL) {
-        sym = findInSymTable(idx, globalvars);
-        if (sym == NULL) raiseError("Unintialised value!");
-    }
-    return sym;
+    vartable = (int *)malloc(tabSize * sizeof(int));
 }
 
-void printWriteArguments(struct node *args) 
+void addToTable(int var, int type)
 {
-    struct node *l = args;
+    if (var >= tabSize) {
+        tabSize *= 2;
+        vartable = (int *)realloc(vartable, tabSize * sizeof(int));
+    }
+    vartable[var] = type;
+}
+
+int createVar(int type)
+{
+    int label = varCnt;
+    addToTable(label, type);
+    varCnt++;
+    if (type == 0) {
+        printf("int _t%d", label);
+    } else {
+        printf("double _t%d", label);
+    }
+    return label;
+}
+
+void printWriteArguments(struct arithNode *args) 
+{
+    struct arithNode *l = args;
     while (l != NULL) {
-        if (l->type != 2 || l->type != 3) {
-            printf(",%s", &stringTable[l->idx]);
-        }
-        if (l->type == 4 || l->type == 5) {
-            putchar('(');
-            printWriteArguments(l->arguments);
-            putchar(')');
-        }
+        printf(",_t%d", l->idx); 
         l = l->next;
     }
-    printf("\n");
 }
 
 void printFuncArguments(struct node *args)
@@ -49,37 +58,44 @@ void printFuncArguments(struct node *args)
     printf("%s", &stringTable[l->idx]);
 }
 
-void printToken(struct node *l, int isEnd)
+void printNode(struct arithNode *l, int isEnd)
 {
-    if (l->type == 0 || l->type == 4) {
+    int type = vartable[l->idx]; 
+    if (type == 0) {
             putchar('%');
             printf("d");
-    } else if (l->type == 1 || l->type == 5) {
+    } else if (type == 1) {
             putchar('%');
-            printf("f");
-    } else if (l->type == 2) {
-            printf("%d", l->ival); // a bit more complicated than anticipated...
-    } else if (l->type == 3) {
-            printf("%f", l->rval);
+            printf("lf");
     }
     if (!isEnd) {
         printf(" ");
     }
 }
 
-void printStmt(struct node *args)
+void printStmt(struct arithNode *args)
 {
-    int len = getLength(args);
+    int len = getArithLength(args);
     if (len == 0) return;
     printf("printf(\"");
-    struct node *l = args;
+    struct arithNode *l = args;
     while (--len != 0) {
-        printToken(l, 0);    
+        printNode(l, 0);    
         l = l->next;
     }
-    printToken(l, 1);
-    printf("\")");
+    printNode(l, 1);
+    printf("\"");
     printWriteArguments(args);
+    printf(")\n");
+}
+
+void printReadArguments(struct node *args)
+{
+    struct node *l = args;
+    while (l != NULL) {
+        printf(",&%s", &stringTable[l->idx]);
+        l = l->next;
+    }
 }
 
 void readInput(struct node *args)
@@ -107,12 +123,12 @@ void readInput(struct node *args)
     if (l != NULL) {
         putchar('%');
         if (l->type == 0) {
-            printf("d\"");
+            printf("d\")");
         } else if (l->type == 1) {
-            printf("f\"");
+            printf("f\")");
         }
     }
-    printWriteArguments(args);
+    printReadArguments(args);
     printf(")\n");
 }
 
@@ -125,7 +141,7 @@ void includeHeaders()
 
 void printMain()
 {
-    printf("int main()\n{");
+    printf("int main()\n{\n");
 }
 
 void printVars(struct node *args, int isConst)
@@ -140,6 +156,7 @@ void printVars(struct node *args, int isConst)
         } else if (l->type == 1) {
             printf("double %s;\n", &stringTable[l->idx]);
         } 
+        l = l->next;
     }
 }
 
@@ -187,7 +204,8 @@ void printIfStmt(int gvariable, int label)
 
 int printBool(int val1, int val2, int op) // 0 lt, 1 leq, 2 eq, 3 neg, 4 geq, 5 gt
 {
-    printf("int _t%d = _t%d ", ++varCnt, val1);
+    createVar(0);
+    printf("=_t%d", val1);
     switch (op) {
         case 0:
             printf("<");
@@ -242,14 +260,10 @@ void printIdentifier(int idx)
 
 int printIdenExpr(int idx)
 {
-    struct symbol *sym = getSymbol(idx);
-    int type = sym->varType;
-    if (type == 0) {
-        printf("int _t%d = %s", ++varCnt, &stringTable[idx]);
-    } else if (type == 1) {
-        printf("double _t%d = %s", ++varCnt, &stringTable[idx]);
-    }
-    return varCnt;
+    int type = 0; // To fix
+    int res = createVar(type);
+    printf("=%s;", &stringTable[idx]);
+    return res;
 }
 
 void callFunc(int idx, struct arithNode *expr)
@@ -262,8 +276,52 @@ void callFunc(int idx, struct arithNode *expr)
         return;
     }
     while (--len) {
-        printf("_t%d,", l->val);
+        printf("_t%d,", l->idx);
         l = l->next;
     }
     printf(");\n");
+}
+
+int makeArith(int var1, int var2, int op) // 0 +, 1 -, 2 *, 3 /, 4 DIV, 5 MOD, 6 neg
+{
+    int label;
+    if (op == 3) {
+        label = createVar(1);
+        printf("=(double)_t%d/(double)_t%d;\n", var1, var2);
+        return label;
+    }
+    if (op == 6) {
+        label = createVar(vartable[var1]);
+        printf("=-_t%d;\n", var1);
+        return label;
+    }
+    if (vartable[var1] == 1 || vartable[var2] == 1) {
+        label = createVar(1);
+    } else {
+        label = createVar(0);
+    }
+    printf("=_t%d", var1);
+    switch (op) {
+        case 0:
+            putchar('+');
+            break;
+        case 1:
+            putchar('-');
+            break;
+        case 2:
+            putchar('*');
+            break;
+        case 3:
+            break;
+        case 4:
+            putchar('/');
+            break;
+        case 5:
+            putchar('%');
+            break;
+        default:
+            break;
+    }
+    printf("_t%d;\n", var2);
+    return label;
 }

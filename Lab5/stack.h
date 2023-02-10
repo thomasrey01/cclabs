@@ -12,6 +12,6 @@ int popStack(struct stack *s);
 
 struct stack *newStack();
 
-int peepStack(struct stack *s);
+int peekStack(struct stack *s);
 
 #endif

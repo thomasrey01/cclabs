@@ -3,7 +3,7 @@
 #include <string.h>
 #include "symbolTable.h"
 
-extern int tableSize;
+int tableSize = 100;
 
 void freeListRec(struct symbol *sym)
 {

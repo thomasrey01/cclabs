@@ -9,10 +9,10 @@ extern struct symbolTable *localvars;
 extern struct symbolTable *globalvars;
 extern struct symbolTable *functions;
 
-void initTable();
 int printIdenExpr(int idx);
 void printWriteArguments(struct arithNode *args);
 void printFuncArguments(struct node *args);
+void printToken(struct arithNode *l, int isEnd);
 void printStmt(struct arithNode *args);
 void readInput(struct node *args);
 void includeHeaders();

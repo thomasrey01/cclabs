@@ -18,9 +18,7 @@ struct node {
 };
 
 struct arithNode {
-    int val;
     int idx;
-    int type;
     struct arithNode *next;
 };
 

@@ -9,11 +9,11 @@
 #include <stdlib.h>
 #include <string.h>
 
-static char *stringTable = NULL; /* The string table itself: a linear array containing strings (including '\0' characters) */
+char *stringTable = NULL; /* The string table itself: a linear array containing strings (including '\0' characters) */
 static int strTabSize = 0;       /* Size of the array stringTable */
 static int strTabIdx = 0;        /* Index in string table where the next insertion can take place */
 
-static void resize(int sz) 
+void resize(int sz) 
 {
   /* This function resizes the string tbale in case 
    * it can not hold another sz characters.

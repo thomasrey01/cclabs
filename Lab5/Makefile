@@ -1,5 +1,5 @@
-all: strtab stack linkedList semanticsCheck codegen parser lexer symbolTable
-	gcc -g -O2 strtab.o stack.o linkedList.o semanticsCheck.o parser.o lexer.o symbolTable.o -o minipas -lfl -lm
+all: strtab stack linkedList parser lexer codegen
+	gcc -g -O2 strtab.o stack.o linkedList.o parser.o lexer.o codegen.o -o minipas -lfl -lm
 
 stack: stack.c stack.h
 	gcc -g -O2 -c stack.c

@@ -3,8 +3,6 @@
 #include <stdlib.h>
 #include "codegen.h"
 #include "strtab.h"
-#include "symbolTable.h"
-#include "semanticsCheck.h"
 #include "linkedList.h"
 #include "stack.h"
 
@@ -40,6 +38,7 @@
 %union {
   int ival;     /* used for passing int values from lexer to parser */
   double rval;  /* used for passing double values from lexer to parser */
+  double dval;
   /* add here anything you may need */
   /*....*/  
   struct node* iden;
@@ -50,7 +49,7 @@
 %type <ival> BasicType
 %type <ival> TypeSpec
 %type <ival> Relop
-%type <list> ArithExpr
+%type <ival> ArithExpr
 %type <ival> BoolAtom
 %type <list> ArithExprList
 %type <ival> Guard
@@ -65,7 +64,7 @@
 %type <iden> ParamList
 %% //Change these later
 
-program            : PROGRAM IDENTIFIER ';' { printHeaders(); }
+program            : PROGRAM IDENTIFIER ';' { includeHeaders(); }
                      ConstDecl { printVars($5, 1); }
                      VarDecl { printVars($7, 0); }
 	                 FuncProcDecl { printMain(); }
@@ -119,12 +118,12 @@ FuncProcDecl       : FuncProcDecl SubProgDecl ';'
                    | /* epsilon */
                    ;
 
-SubProgDecl        : SubProgHeading VarDecl { printVars($2); } CompoundStatement { }
+SubProgDecl        : SubProgHeading VarDecl { printVars($2, 0); } CompoundStatement { }
                    ;
 
 SubProgHeading     : FUNCTION IDENTIFIER { pushStack(yylval.ival, s); } Parameters ':' BasicType ';' { 
                    funcSave = popStack(s);
-                   printFunctionHeader(funcsave, $4, $6);
+                   printFunctionHeader(funcSave, $4, $6);
 }
                    | PROCEDURE IDENTIFIER { pushStack(yylval.ival, s); } PossibleParameters ';' { 
                     funcSave = popStack(s);
@@ -169,10 +168,10 @@ Statement          : Lhs ASSIGN ArithExpr { printf("=_t%d;", $3); }
                     incrementLabel();
 } 
                    THEN  Statement {
-                    int label = peepStack(labels);
+                    int label = peekStack(labels);
                     label += 2;
                     printf("goto lb%d;\n", label);
-                   }  ELSE { printf("lb%s : ;", popStack(labels)); } Statement { 
+                   }  ELSE { printf("lb%d : ;", popStack(labels)); } Statement { 
 }
                    | WHILE {  
                     pushStack(printNextLabel(), labels); 
@@ -183,14 +182,14 @@ Statement          : Lhs ASSIGN ArithExpr { printf("=_t%d;", $3); }
                     readInput($2); 
 }
                    | WRITELN '(' ArithExprList ')' { 
-                    printTokens($3); 
+                    printStmt($3); 
 }
                    | SKIP
                    ;
 
 
 Lhs                : IDENTIFIER { printIdentifier(yylval.ival); }
-                   | IDENTIFIER { pushStack(yylval.ival); } '[' ArithExpr ']' {
+                   | IDENTIFIER { pushStack(yylval.ival, s); } '[' ArithExpr ']' {
                     int idx = popStack(s);
                     printIdentifier(idx);
                     printf("[_t%d]", $4);
@@ -201,8 +200,8 @@ ProcedureCall      : IDENTIFIER { callFunc(yylval.ival, NULL); }
                    | IDENTIFIER { pushStack(yylval.ival, s); } '(' ArithExprList ')' { callFunc(popStack(s), $4); }
                    ;
 
-Guard              : BoolAtom { $$ = printBool($1); $$ = $1; }
-                   | NOT Guard { $$ = printGuard(-1, $2, 0) }
+Guard              : BoolAtom { $$ = $1; }
+                   | NOT Guard { $$ = printGuard(-1, $2, 0); }
                    | Guard OR Guard { $$ = printGuard($1, $3, 1); }
                    | Guard AND Guard { $$ = printGuard($1, $3, 2); }
                    | '(' Guard ')' { $$ = $2; }
@@ -219,41 +218,36 @@ Relop              : RELOPLT { $$ = 0; }
                    | RELOPGT { $$ = 5; }
                    ;
 
-ArithExprList      : ArithExpr { $$ = (-1); $$->type = $1; $$->next = NULL;  } 
+ArithExprList      : ArithExpr { $$ = createArithNode($1); $$->next = NULL;  } 
                    | ArithExprList ',' ArithExpr {
-                    $$ = createNewNode(-1);
-                    $$->type = $3;
+                    $$ = createArithNode($3);
                     $$->next = $1;
 }
                    ;
 
-ArithExpr          : IDENTIFIER {
-                   $$ = createArithNode(printIdenExpr(yylval.ival));
-                   $$->type = getType(yylval.ival); 
-                   $$->next = NULL;
+ArithExpr          : IDENTIFIER { // arithNodes for arithmetic expressions. 
+                   $$ = printIdenExpr(yylval.ival);
 }
-                   | IDENTIFIER { pushStack(yylval.ival, s); }'[' ArithExpr ']' {
+                   | IDENTIFIER { pushStack(yylval.ival, s); }'[' ArithExpr ']' { // Identifiers need array type...
                     int idx = popStack(s);
                     printIdentifier(idx);
-                    printf("[_t%d]", $4->val);
+                    printf("[_t%d]", $4);
         
 }
-                   | IDENTIFIER { pushStack(yylval.ival, s); } '(' ArithExprList ')' { 
+                   | IDENTIFIER { pushStack(yylval.ival, s); } '(' ArithExprList ')' { // Functions need types 
                     funcSave = popStack(s);
-                    $$ = getFuncType(funcSave);
-                    checkFunction(funcSave, $4); 
                     
-}
+} // This needs doing, add every function to a special tree
                    | INTNUMBER { printf("%d\n", yylval.ival); }
                    | REALNUMBER { printf("%lf\n", yylval.rval); }
-                   | ArithExpr '+' ArithExpr { $$ = max($1, $3); }
-                   | ArithExpr '-' ArithExpr { $$ = max($1, $3); }
-                   | ArithExpr '*' ArithExpr { $$ = max($1, $3); }
-                   | ArithExpr '/' ArithExpr { $$ = 1; }
-                   | ArithExpr DIV ArithExpr { $$ = 0, noReal($1, $3);}
-                   | ArithExpr MOD ArithExpr { $$ = 0; noReal($1, $3);}
-                   | '-' ArithExpr { $$ = $2; }
-                   | '(' ArithExpr ')' { $$ = $2; }
+                   | ArithExpr '+' ArithExpr { $$ = makeArith($1, $3, 0); } // These rules are wrong
+                   | ArithExpr '-' ArithExpr { $$ = makeArith($1, $3, 1); }
+                   | ArithExpr '*' ArithExpr { $$ = makeArith($1, $3, 2); }
+                   | ArithExpr '/' ArithExpr { $$ = makeArith($1, $3, 3); }
+                   | ArithExpr DIV ArithExpr { $$ = makeArith($1, $3, 4); }
+                   | ArithExpr MOD ArithExpr { $$ = makeArith($1, $3, 5); }
+                   | '-' ArithExpr { makeArith($2, 0, 6); }
+                   | '(' ArithExpr ')' { }
                    ;
 
 %%
@@ -362,7 +356,8 @@ int main(int argc, char *argv[]) {
     fprintf(stderr, "Usage: %s [pasfile]\n", argv[0]);
     return EXIT_FAILURE;
   }
-  initTables();
+  // initTables();
+  initTable();
   s = newStack();
   
   FILE *f = stdin;
